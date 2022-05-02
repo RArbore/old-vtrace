@@ -18,23 +18,23 @@
 
 int main(void) {
     PROPAGATE(glfwInit() == GLFW_TRUE, ERROR, "Couldn't initialize GLFW.");
-    GLFWwindow* window = create_window();
-    PROPAGATE(window, ERROR, "Couldn't create a window.");
+    window_t window;
+    PROPAGATE(create_window(&window) == SUCCESS, ERROR, "Couldn't create a window.");
 
-    PROPAGATE_CLEANUP_BEGIN(create_context(window) == SUCCESS, "Couldn't create graphics context.");
-    destroy_window(window);
+    PROPAGATE_CLEANUP_BEGIN(create_context(&window) == SUCCESS, "Couldn't create graphics context.");
+    destroy_window(&window);
     glfwTerminate();
     PROPAGATE_CLEANUP_END(ERROR);
 
-    while (!should_close(window)) {
+    while (!should_close(&window)) {
 	glfwPollEvents();
-	PROPAGATE_CLEANUP_BEGIN(render_frame(window) == SUCCESS, "Failed to render frame.");
-	destroy_window(window);
+	PROPAGATE_CLEANUP_BEGIN(render_frame(&window) == SUCCESS, "Failed to render frame.");
+	destroy_window(&window);
 	glfwTerminate();
 	PROPAGATE_CLEANUP_END(ERROR);
     }
 
-    destroy_window(window);
+    destroy_window(&window);
     glfwTerminate();
     
     return SUCCESS;

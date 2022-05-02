@@ -13,24 +13,25 @@
 #include "window.h"
 #include "error.h"
 
-GLFWwindow* create_window(void) {
+int create_window(window_t* window) {
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    GLFWwindow* window = glfwCreateWindow(DEFAULT_WIDTH, DEFAULT_HEIGHT, "vtrace", NULL, NULL);
-    PROPAGATE(window, NULL, "Couldn't create GLFW window.");
+    window->_glfw_window = glfwCreateWindow(DEFAULT_WIDTH, DEFAULT_HEIGHT, "vtrace", NULL, NULL);
+    PROPAGATE(window->_glfw_window, ERROR, "Couldn't create GLFW window.");
 
-    glfwShowWindow(window);
-    glfwMakeContextCurrent(window);
+    glfwShowWindow(window->_glfw_window);
+    glfwMakeContextCurrent(window->_glfw_window);
     glViewport(0, 0, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+    glEnable(GL_FRAMEBUFFER_SRGB); 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    return window;
+    return SUCCESS;
 }
 
-int should_close(GLFWwindow* window) {
-    return glfwWindowShouldClose(window);
+int should_close(window_t* window) {
+    return glfwWindowShouldClose(window->_glfw_window);
 }
 
-void destroy_window(GLFWwindow* window) {
-    glfwDestroyWindow(window);
+void destroy_window(window_t* window) {
+    glfwDestroyWindow(window->_glfw_window);
 }

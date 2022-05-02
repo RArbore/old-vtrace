@@ -19,10 +19,14 @@
 #define DEFAULT_WIDTH 800
 #define DEFAULT_HEIGHT 800
 
-GLFWwindow* create_window(void);
+typedef struct window_t {
+    GLFWwindow* _glfw_window;
+} window_t;
 
-int should_close(GLFWwindow*);
+int create_window(window_t*);
 
-void destroy_window(GLFWwindow*);
+int should_close(window_t*);
+
+void destroy_window(window_t*);
 
 #endif // WINDOW_H_

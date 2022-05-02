@@ -18,8 +18,10 @@
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
 
-int create_context(GLFWwindow*);
+#include "window.h"
 
-int render_frame(GLFWwindow*);
+int create_context(window_t*);
+
+int render_frame(window_t*);
 
 #endif // RENDER_H_

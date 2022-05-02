@@ -65,8 +65,8 @@ static GLuint create_shader_program(GLuint vertex_shader, GLuint fragment_shader
     return shader_program;
 }
 
-int create_context(GLFWwindow* window) {
-    glfwMakeContextCurrent(window);
+int create_context(window_t* window) {
+    glfwMakeContextCurrent(window->_glfw_window);
 
     const char* shader_vert_start = &_binary_shaders_shader_vert_start;
     const char* shader_vert_end = &_binary_shaders_shader_vert_end;
@@ -92,13 +92,13 @@ int create_context(GLFWwindow* window) {
     return SUCCESS;
 }
 
-int render_frame(GLFWwindow* window) {
-    glfwMakeContextCurrent(window);
+int render_frame(window_t* window) {
+    glfwMakeContextCurrent(window->_glfw_window);
 
     glClear(GL_COLOR_BUFFER_BIT);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    glfwSwapBuffers(window);
+    glfwSwapBuffers(window->_glfw_window);
 
     GLenum error = glGetError();
     PROPAGATE_CLEANUP_BEGIN(error == GL_NO_ERROR, "Encountered a GL error:");
