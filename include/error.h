@@ -18,12 +18,11 @@
 #define SUCCESS 0
 #define ERROR 1
 
-#define PROPAGATE(call, log)			\
+#define PROPAGATE(call, error, log)		\
     {						\
-	int code = call;			\
-	if (code != SUCCESS) {			\
-	    printf("ERROR: %s\n", log);		\
-	    return code;			\
+	if (!(call)) {				\
+	    printf("ERROR: %s\n", (log));	\
+	    return (error);			\
 	}					\
     }
 

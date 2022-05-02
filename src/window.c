@@ -15,10 +15,17 @@
 #include "window.h"
 #include "error.h"
 
-int create_window(void) {
-    return ERROR;
+GLFWwindow* create_window(void) {
+    PROPAGATE(glfwInit() == GLFW_TRUE, NULL, "Couldn't initialize GLFW.");
+
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+    GLFWwindow* window = glfwCreateWindow(DEFAULT_WIDTH, DEFAULT_HEIGHT, "vtrace", NULL, NULL);
+    PROPAGATE(window, NULL, "Couldn't create GLFW window.");
+
+    return window;
 }
 
-void destroy_window(void) {
-
+void destroy_window(GLFWwindow* window) {
+    glfwDestroyWindow(window);
 }

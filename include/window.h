@@ -19,8 +19,8 @@
 #define DEFAULT_WIDTH 800
 #define DEFAULT_HEIGHT 800
 
-int create_window(void);
+GLFWwindow* create_window(void);
 
-void destroy_window(void);
+void destroy_window(GLFWwindow*);
 
 #endif // WINDOW_H_
