@@ -20,4 +20,6 @@
 
 int create_context(GLFWwindow*);
 
+int render_frame(GLFWwindow*);
+
 #endif // RENDER_H_

@@ -83,5 +83,19 @@ int create_context(GLFWwindow* window) {
     GLuint shader_program = create_shader_program(vertex_shader, fragment_shader);
     PROPAGATE(shader_program, ERROR, "Couldn't create shader program.");
 
+    glUseProgram(shader_program);
+    glDeleteShader(vertex_shader);
+    glDeleteShader(fragment_shader);
+
+    return SUCCESS;
+}
+
+int render_frame(GLFWwindow* window) {
+    glfwMakeContextCurrent(window);
+
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glfwSwapBuffers(window);
+    
     return SUCCESS;
 }

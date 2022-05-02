@@ -24,6 +24,7 @@ int main(void) {
 
     while (!should_close(window)) {
 	glfwPollEvents();
+	PROPAGATE(render_frame(window) == SUCCESS, ERROR, "Failed to render frame.");
     }
 
     destroy_window(window);
