@@ -31,7 +31,7 @@ uniform uint window_width;
 uniform uint window_height;
 
 void main() {
-    vec3 ray_dir = normalize(vec3(gl_FragCoord.x - window_width / 2, gl_FragCoord.y - window_height / 2, CAM_DIST));
+    vec3 ray_dir = camera_rot * normalize(vec3(gl_FragCoord.x - window_width / 2, gl_FragCoord.y - window_height / 2, CAM_DIST));
     frag_color = vec4(
 		      (position[0] + 1.0) / 2.0,
 		      (position[1] + 1.0) / 2.0,

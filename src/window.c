@@ -11,9 +11,12 @@
     along with vtrace. If not, see <https://www.gnu.org/licenses/>.  */
 
 #include "window.h"
+#include "world.h"
 #include "error.h"
 
 int create_window(window_t* window) {
+    init_world(&window->_world);
+    
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     window->_glfw_window = glfwCreateWindow(DEFAULT_WIDTH, DEFAULT_HEIGHT, "vtrace", NULL, NULL);

@@ -107,8 +107,8 @@ int create_context(window_t* window) {
 int render_frame(window_t* window) {
     glfwMakeContextCurrent(window->_glfw_window);
 
-    glUniform3fv(window->_camera_loc_uniform, 1, window->_camera_loc);
-    glUniformMatrix3fv(window->_camera_rot_uniform, 1, 0, window->_camera_rot);
+    glUniform3fv(window->_camera_loc_uniform, 1, window->_world._camera._camera_loc);
+    glUniformMatrix3fv(window->_camera_rot_uniform, 1, 0, window->_world._camera._camera_rot);
     glUniform1ui(window->_window_width_uniform, DEFAULT_WIDTH);
     glUniform1ui(window->_window_height_uniform, DEFAULT_HEIGHT);
 
