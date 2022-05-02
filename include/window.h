@@ -21,6 +21,8 @@
 
 GLFWwindow* create_window(void);
 
+int should_close(GLFWwindow*);
+
 void destroy_window(GLFWwindow*);
 
 #endif // WINDOW_H_

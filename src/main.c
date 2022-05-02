@@ -19,6 +19,10 @@ int main(void) {
     GLFWwindow* window = create_window();
     PROPAGATE(window, ERROR, "Couldn't create a window.");
 
+    while (!should_close(window)) {
+	glfwPollEvents();
+    }
+
     destroy_window(window);
     
     return SUCCESS;

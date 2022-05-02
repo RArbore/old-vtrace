@@ -23,7 +23,16 @@ GLFWwindow* create_window(void) {
     GLFWwindow* window = glfwCreateWindow(DEFAULT_WIDTH, DEFAULT_HEIGHT, "vtrace", NULL, NULL);
     PROPAGATE(window, NULL, "Couldn't create GLFW window.");
 
+    glfwShowWindow(window);
+    glfwMakeContextCurrent(window);
+    glViewport(0, 0, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+    glClear(GL_COLOR_BUFFER_BIT);
+
     return window;
+}
+
+int should_close(GLFWwindow* window) {
+    return glfwWindowShouldClose(window);
 }
 
 void destroy_window(GLFWwindow* window) {
