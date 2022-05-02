@@ -96,8 +96,14 @@ int render_frame(GLFWwindow* window) {
     glfwMakeContextCurrent(window);
 
     glClear(GL_COLOR_BUFFER_BIT);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glfwSwapBuffers(window);
+
+    GLenum error = glGetError();
+    PROPAGATE_CLEANUP_BEGIN(error == GL_NO_ERROR, "Encountered a GL error:");
+    printf("Error code: %d\n", error);
+    PROPAGATE_CLEANUP_END(ERROR);
     
     return SUCCESS;
 }
