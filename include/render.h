@@ -13,6 +13,8 @@
 #ifndef RENDER_H_
 #define RENDER_H_
 
+#include <stdlib.h>
+
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
 
