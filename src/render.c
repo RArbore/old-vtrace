@@ -38,7 +38,29 @@ static GLuint create_shader(GLenum shader_type, const char* shader_text, const i
 	
 	free(error_log);
     }
+
     return shader;
+}
+
+static GLuint create_shader_program(GLuint vertex_shader, GLuint fragment_shader) {
+    int shader_iv = 0;
+    GLuint shader_program = glCreateProgram();
+
+    glAttachShader(shader_program, vertex_shader);
+    glAttachShader(shader_program, fragment_shader);
+    glLinkProgram(shader_program);
+    
+    glGetProgramiv(shader_program, GL_LINK_STATUS, &shader_iv);
+    if (!shader_iv) {
+        glGetProgramiv(shader_program, GL_INFO_LOG_LENGTH, &shader_iv);
+	char* error_log = malloc((size_t) shader_iv * sizeof(char));
+
+	glGetProgramInfoLog(shader_program, shader_iv, NULL, error_log);
+	PROPAGATE(0, 0, error_log);
+	
+	free(error_log);
+    }
+    return shader_program;
 }
 
 int create_context(GLFWwindow* window) {
@@ -57,6 +79,9 @@ int create_context(GLFWwindow* window) {
 
     GLuint fragment_shader = create_shader(GL_FRAGMENT_SHADER, shader_frag_start, frag_len);
     PROPAGATE(fragment_shader, ERROR, "Couldn't create fragment shader.");
+
+    GLuint shader_program = create_shader_program(vertex_shader, fragment_shader);
+    PROPAGATE(shader_program, ERROR, "Couldn't create shader program.");
 
     return SUCCESS;
 }
