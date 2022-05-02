@@ -89,11 +89,20 @@ int create_context(window_t* window) {
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
 
+    window->_camera_loc_uniform = glGetUniformLocation(shader_program, "camera_loc");
+    PROPAGATE(window->_camera_loc_uniform != -1, ERROR, "Couldn't find camera_loc uniform.");
+
+    window->_camera_rot_uniform = glGetUniformLocation(shader_program, "camera_rot");
+    PROPAGATE(window->_camera_rot_uniform != -1, ERROR, "Couldn't find camera_rot uniform.");
+
     return SUCCESS;
 }
 
 int render_frame(window_t* window) {
     glfwMakeContextCurrent(window->_glfw_window);
+
+    glUniform3fv(window->_camera_loc_uniform, 1, window->_camera_loc);
+    glUniformMatrix3fv(window->_camera_rot_uniform, 1, 0, window->_camera_rot);
 
     glClear(GL_COLOR_BUFFER_BIT);
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -102,7 +111,7 @@ int render_frame(window_t* window) {
 
     GLenum error = glGetError();
     PROPAGATE_CLEANUP_BEGIN(error == GL_NO_ERROR, "Encountered a GL error:");
-    printf("Error code: %d\n", error);
+    printf("Error code: 0x%x\n", error);
     PROPAGATE_CLEANUP_END(ERROR);
     
     return SUCCESS;

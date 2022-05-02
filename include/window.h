@@ -21,6 +21,12 @@
 
 typedef struct window_t {
     GLFWwindow* _glfw_window;
+    
+    GLint _camera_loc_uniform;
+    GLint _camera_rot_uniform;
+
+    float _camera_loc[3];
+    float _camera_rot[9];
 } window_t;
 
 int create_window(window_t*);

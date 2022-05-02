@@ -16,11 +16,14 @@ in vec2 position;
 
 out vec4 frag_color;
 
+uniform vec3 camera_loc;
+uniform mat3 camera_rot;
+
 void main() {
     frag_color = vec4(
 		      (position[0] + 1.0) / 2.0,
 		      (position[1] + 1.0) / 2.0,
 		      1.0,
-		      1.0
+		      camera_loc[0] + camera_rot[0][0]
 		      );
 }

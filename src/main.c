@@ -18,7 +18,7 @@
 
 int main(void) {
     PROPAGATE(glfwInit() == GLFW_TRUE, ERROR, "Couldn't initialize GLFW.");
-    window_t window;
+    window_t window = {0};
     PROPAGATE(create_window(&window) == SUCCESS, ERROR, "Couldn't create a window.");
 
     PROPAGATE_CLEANUP_BEGIN(create_context(&window) == SUCCESS, "Couldn't create graphics context.");
