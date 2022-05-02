@@ -16,7 +16,7 @@
 #include "error.h"
 
 int create_window(void) {
-    return SUCCESS;
+    return ERROR;
 }
 
 void destroy_window(void) {

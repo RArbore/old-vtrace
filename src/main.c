@@ -16,7 +16,7 @@
 #include "error.h"
 
 int main(void) {
-    PROPAGATE(create_window());
+    PROPAGATE(create_window(), "Couldn't create a window.");
 
     destroy_window();
     

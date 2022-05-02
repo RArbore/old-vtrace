@@ -23,9 +23,9 @@ LD_FLAGS=-lGL -lglfw
 
 build/vtrace: build/main.o build/window.o
 	$(LD) -o $@ $^ $(LD_FLAGS)
-build/main.o: src/main.c
+build/main.o: src/main.c include/window.h include/error.h
 	$(CC) $(CC_FLAGS) -c -o $@ $<
-build/window.o: src/window.c
+build/window.o: src/window.c include/window.h include/error.h
 	$(CC) $(CC_FLAGS) -c -o $@ $<
 
 exe: build/vtrace

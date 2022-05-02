@@ -13,13 +13,18 @@
 #ifndef ERROR_H_
 #define ERROR_H_
 
-#define SUCCESS 0
-#define ERROR 0
+#include <stdio.h>
 
-#define PROPAGATE(call)\
-    {\
-	int code = call;\
-	if (code != SUCCESS) return code;\
+#define SUCCESS 0
+#define ERROR 1
+
+#define PROPAGATE(call, log)			\
+    {						\
+	int code = call;			\
+	if (code != SUCCESS) {			\
+	    printf("ERROR: %s\n", log);		\
+	    return code;			\
+	}					\
     }
 
 #endif // ERROR_H_
