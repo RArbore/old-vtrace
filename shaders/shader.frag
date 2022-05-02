@@ -12,8 +12,9 @@
 
 #version 460 core
 
-#define M_PI 3.1415926535897932384
-#define CAM_DIST 100.0
+#define M_PI 3.1415926535
+#define SQRT_2 1.4142135624
+#define CAM_DIST 400.0
 
 #define SKY_COLOR vec3(0.2, 0.3, 0.8)
 
@@ -30,14 +31,22 @@ uniform mat3 camera_rot;
 uniform uint window_width;
 uniform uint window_height;
 
+bool point_in_cube(vec3 pos, float half_len) {
+    vec3 abs_pos = abs(pos);
+    return abs_pos.x <= half_len && abs_pos.y <= half_len && abs_pos.z <= half_len;
+}
+
 void main() {
     vec3 ray_dir = camera_rot * normalize(vec3(gl_FragCoord.x - window_width / 2, gl_FragCoord.y - window_height / 2, CAM_DIST));
     vec3 ray_pos = camera_loc;
 
+    vec3 cube_pos = vec3(4.0, 1.0, 20.0);
+    mat3 cube_rot = mat3(1.0, 0.0, 0.0, 0.0, SQRT_2, -SQRT_2, 0.0, SQRT_2, SQRT_2);
+
     bool hit = false;
     for (uint i = 0; i < MAX_STEPS; ++i) {
 	ray_pos += STEP_SIZE * ray_dir;
-	if (distance(ray_pos, vec3(4.0, 4.0, 10.0)) <= 1.0) {
+	if (point_in_cube(inverse(cube_rot) * (ray_pos - cube_pos), 1.0)) {
 	    hit = true;
 	    break;
 	}
