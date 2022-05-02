@@ -10,15 +10,15 @@
     You should have received a copy of the GNU General Public License
     along with vtrace. If not, see <https://www.gnu.org/licenses/>.  */
 
-#include <stdio.h>
+#define GL_GLEXT_PROTOTYPES
 
 #include "window.h"
 #include "error.h"
 
-int main(void) {
-    PROPAGATE(create_window());
-
-    destroy_window();
-    
+int create_window(void) {
     return SUCCESS;
+}
+
+void destroy_window(void) {
+
 }

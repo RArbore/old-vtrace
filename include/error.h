@@ -10,15 +10,16 @@
     You should have received a copy of the GNU General Public License
     along with vtrace. If not, see <https://www.gnu.org/licenses/>.  */
 
-#include <stdio.h>
+#ifndef ERROR_H_
+#define ERROR_H_
 
-#include "window.h"
-#include "error.h"
+#define SUCCESS 0
+#define ERROR 0
 
-int main(void) {
-    PROPAGATE(create_window());
+#define PROPAGATE(call)\
+    {\
+	int code = call;\
+	if (code != SUCCESS) return code;\
+    }
 
-    destroy_window();
-    
-    return SUCCESS;
-}
+#endif // ERROR_H_

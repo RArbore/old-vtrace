@@ -10,15 +10,17 @@
     You should have received a copy of the GNU General Public License
     along with vtrace. If not, see <https://www.gnu.org/licenses/>.  */
 
-#include <stdio.h>
+#ifndef WINDOW_H_
+#define WINDOW_H_
 
-#include "window.h"
-#include "error.h"
+#include <GL/gl.h>
+#include <GLFW/glfw3.h>
 
-int main(void) {
-    PROPAGATE(create_window());
+#define DEFAULT_WIDTH 800
+#define DEFAULT_HEIGHT 800
 
-    destroy_window();
-    
-    return SUCCESS;
-}
+int create_window(void);
+
+void destroy_window(void);
+
+#endif // WINDOW_H_
