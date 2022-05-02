@@ -95,6 +95,12 @@ int create_context(window_t* window) {
     window->_camera_rot_uniform = glGetUniformLocation(shader_program, "camera_rot");
     PROPAGATE(window->_camera_rot_uniform != -1, ERROR, "Couldn't find camera_rot uniform.");
 
+    window->_window_width_uniform = glGetUniformLocation(shader_program, "window_width");
+    PROPAGATE(window->_window_width_uniform != -1, ERROR, "Couldn't find window_width uniform.");
+
+    window->_window_height_uniform = glGetUniformLocation(shader_program, "window_height");
+    PROPAGATE(window->_window_height_uniform != -1, ERROR, "Couldn't find window_height uniform.");
+
     return SUCCESS;
 }
 
@@ -103,6 +109,8 @@ int render_frame(window_t* window) {
 
     glUniform3fv(window->_camera_loc_uniform, 1, window->_camera_loc);
     glUniformMatrix3fv(window->_camera_rot_uniform, 1, 0, window->_camera_rot);
+    glUniform1ui(window->_window_width_uniform, DEFAULT_WIDTH);
+    glUniform1ui(window->_window_height_uniform, DEFAULT_HEIGHT);
 
     glClear(GL_COLOR_BUFFER_BIT);
     glDrawArrays(GL_TRIANGLES, 0, 6);

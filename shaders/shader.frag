@@ -12,6 +12,14 @@
 
 #version 460 core
 
+#define M_PI 3.1415926535897932384
+#define CAM_DIST 100.0
+
+#define SKY_COLOR vec3(0.2, 0.3, 0.8)
+
+#define MAX_STEPS 100
+#define STEP_SIZE 0.1
+
 in vec2 position;
 
 out vec4 frag_color;
@@ -19,11 +27,15 @@ out vec4 frag_color;
 uniform vec3 camera_loc;
 uniform mat3 camera_rot;
 
+uniform uint window_width;
+uniform uint window_height;
+
 void main() {
+    vec3 ray_dir = normalize(vec3(gl_FragCoord.x - window_width / 2, gl_FragCoord.y - window_height / 2, CAM_DIST));
     frag_color = vec4(
 		      (position[0] + 1.0) / 2.0,
 		      (position[1] + 1.0) / 2.0,
-		      1.0,
+		      ray_dir.z > 0.8 ? 1.0 : 0.0,
 		      camera_loc[0] + camera_rot[0][0]
 		      );
 }
