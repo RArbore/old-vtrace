@@ -17,7 +17,7 @@
 
 #define SKY_COLOR vec3(0.2, 0.3, 0.8)
 
-#define MAX_STEPS 100
+#define MAX_STEPS 1000
 #define STEP_SIZE 0.1
 
 in vec2 position;
@@ -32,10 +32,16 @@ uniform uint window_height;
 
 void main() {
     vec3 ray_dir = camera_rot * normalize(vec3(gl_FragCoord.x - window_width / 2, gl_FragCoord.y - window_height / 2, CAM_DIST));
-    frag_color = vec4(
-		      (position[0] + 1.0) / 2.0,
-		      (position[1] + 1.0) / 2.0,
-		      ray_dir.z > 0.8 ? 1.0 : 0.0,
-		      camera_loc[0] + camera_rot[0][0]
-		      );
+    vec3 ray_pos = camera_loc;
+
+    bool hit = false;
+    for (uint i = 0; i < MAX_STEPS; ++i) {
+	ray_pos += STEP_SIZE * ray_dir;
+	if (distance(ray_pos, vec3(4.0, 4.0, 10.0)) <= 1.0) {
+	    hit = true;
+	    break;
+	}
+    }
+
+    frag_color = hit ? vec4(0.0, 0.0, 0.0, 1.0) : vec4(SKY_COLOR, 1.0);
 }
