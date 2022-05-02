@@ -32,11 +32,12 @@ static GLuint create_shader(GLenum shader_type, const char* shader_text, const i
     if (!shader_iv) {
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &shader_iv);
 	char* error_log = malloc((size_t) shader_iv * sizeof(char));
+	PROPAGATE(error_log, 0, "Couldn't allocate space for error log.");
 
 	glGetShaderInfoLog(shader, shader_iv, NULL, error_log);
-	PROPAGATE(0, 0, error_log);
-	
+	PROPAGATE_CLEANUP_BEGIN(0, error_log);
 	free(error_log);
+	PROPAGATE_CLEANUP_END(0);
     }
 
     return shader;
@@ -54,11 +55,12 @@ static GLuint create_shader_program(GLuint vertex_shader, GLuint fragment_shader
     if (!shader_iv) {
         glGetProgramiv(shader_program, GL_INFO_LOG_LENGTH, &shader_iv);
 	char* error_log = malloc((size_t) shader_iv * sizeof(char));
+	PROPAGATE(error_log, 0, "Couldn't allocate space for error log.");
 
 	glGetProgramInfoLog(shader_program, shader_iv, NULL, error_log);
-	PROPAGATE(0, 0, error_log);
-	
+	PROPAGATE_CLEANUP_BEGIN(0, error_log);
 	free(error_log);
+	PROPAGATE_CLEANUP_END(0);
     }
     return shader_program;
 }

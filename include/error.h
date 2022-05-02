@@ -18,12 +18,20 @@
 #define SUCCESS 0
 #define ERROR 1
 
-#define PROPAGATE(call, error, log)		\
-    {						\
-	if (!(call)) {				\
-	    printf("ERROR: %s\n", (log));	\
-	    return (error);			\
-	}					\
+#define PROPAGATE(call, error, log)			\
+    {							\
+	if (!(call)) {					\
+	    fprintf(stderr, "ERROR: %s\n", (log));	\
+	    return (error);				\
+	}						\
+    }
+
+#define PROPAGATE_CLEANUP_BEGIN(call, log)		\
+    if (!(call)) {					\
+    fprintf(stderr, "ERROR: %s\n", (log));		\
+    
+#define PROPAGATE_CLEANUP_END(error)			\
+    return (error);					\
     }
 
 #endif // ERROR_H_

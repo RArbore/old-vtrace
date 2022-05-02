@@ -14,8 +14,6 @@
 #include "error.h"
 
 GLFWwindow* create_window(void) {
-    PROPAGATE(glfwInit() == GLFW_TRUE, NULL, "Couldn't initialize GLFW.");
-
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     GLFWwindow* window = glfwCreateWindow(DEFAULT_WIDTH, DEFAULT_HEIGHT, "vtrace", NULL, NULL);
