@@ -13,11 +13,14 @@
 #include <stdio.h>
 
 #include "window.h"
+#include "render.h"
 #include "error.h"
 
 int main(void) {
     GLFWwindow* window = create_window();
     PROPAGATE(window, ERROR, "Couldn't create a window.");
+
+    PROPAGATE(create_context(window) == SUCCESS, ERROR, "Couldn't create graphics context.");
 
     while (!should_close(window)) {
 	glfwPollEvents();

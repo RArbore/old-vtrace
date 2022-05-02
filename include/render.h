@@ -10,19 +10,12 @@
     You should have received a copy of the GNU General Public License
     along with vtrace. If not, see <https://www.gnu.org/licenses/>.  */
 
-#ifndef WINDOW_H_
-#define WINDOW_H_
+#ifndef RENDER_H_
+#define RENDER_H_
 
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
 
-#define DEFAULT_WIDTH 800
-#define DEFAULT_HEIGHT 800
+int create_context(GLFWwindow*);
 
-GLFWwindow* create_window(void);
-
-int should_close(GLFWwindow*);
-
-void destroy_window(GLFWwindow*);
-
-#endif // WINDOW_H_
+#endif // RENDER_H_

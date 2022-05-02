@@ -15,18 +15,26 @@
 
 CC=gcc
 LD=gcc
+OBJ=objcopy
 
 W_FLAGS=-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wredundant-decls -Wshadow -Wsign-conversion -Wswitch-default -Wundef -Werror -Wno-unused -Wconversion
 
 CC_FLAGS=-g -std=c99 -Ofast -fno-signed-zeros -fno-trapping-math -frename-registers -funroll-loops -march=native -Iinclude $(W_FLAGS)
 LD_FLAGS=-lGL -lglfw
 
-build/vtrace: build/main.o build/window.o
+build/vtrace: build/main.o build/window.o build/render.o build/vertex.o build/fragment.o
 	$(LD) -o $@ $^ $(LD_FLAGS)
-build/main.o: src/main.c include/window.h include/error.h
+build/main.o: src/main.c include/window.h include/render.h include/error.h
 	$(CC) $(CC_FLAGS) -c -o $@ $<
-build/window.o: src/window.c include/window.h include/error.h
+build/window.o: src/window.c include/window.h include/render.h include/error.h
 	$(CC) $(CC_FLAGS) -c -o $@ $<
+build/render.o: src/render.c include/window.h include/render.h include/error.h
+	$(CC) $(CC_FLAGS) -c -o $@ $<
+
+build/vertex.o: shaders/shader.vert
+	$(OBJ) --input binary --output elf64-x86-64 $< $@
+build/fragment.o: shaders/shader.frag
+	$(OBJ) --input binary --output elf64-x86-64 $< $@
 
 exe: build/vtrace
 	__GL_SYNC_TO_VBLANK=0 build/vtrace

@@ -10,8 +10,6 @@
     You should have received a copy of the GNU General Public License
     along with vtrace. If not, see <https://www.gnu.org/licenses/>.  */
 
-#define GL_GLEXT_PROTOTYPES
-
 #include "window.h"
 #include "error.h"
 
