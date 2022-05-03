@@ -20,7 +20,7 @@ OBJ=objcopy
 W_FLAGS=-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wredundant-decls -Wshadow -Wsign-conversion -Wswitch-default -Wundef -Werror -Wno-unused -Wconversion
 
 CC_FLAGS=-g -std=c99 -Ofast -fno-signed-zeros -fno-trapping-math -frename-registers -funroll-loops -march=native -Iinclude $(W_FLAGS)
-LD_FLAGS=-lGL -lglfw
+LD_FLAGS=-lm -lGL -lglfw
 
 build/vtrace: build/main.o build/control.o build/window.o build/render.o build/world.o build/vertex.o build/fragment.o
 	$(LD) -o $@ $^ $(LD_FLAGS)

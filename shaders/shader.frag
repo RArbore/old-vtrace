@@ -26,7 +26,7 @@ in vec2 position;
 out vec4 frag_color;
 
 uniform vec3 camera_loc;
-uniform mat3 camera_rot;
+uniform vec2 camera_rot;
 
 uniform uint window_width;
 uniform uint window_height;
@@ -37,20 +37,22 @@ bool point_in_cube(vec3 pos, float half_len) {
 }
 
 void main() {
-    vec3 ray_dir = camera_rot * normalize(vec3(gl_FragCoord.x - window_width / 2, gl_FragCoord.y - window_height / 2, CAM_DIST));
+    mat3 camera_rot_mat = mat3(cos(camera_rot[0]), 0.0, sin(camera_rot[0]), 0.0, 1.0, 0.0, -sin(camera_rot[0]), 0.0, cos(camera_rot[0])) * mat3(1.0, 0.0, 0.0, 0.0, cos(camera_rot[1]), -sin(camera_rot[1]), 0.0, sin(camera_rot[1]), cos(camera_rot[1]));
+    vec3 ray_dir = camera_rot_mat * normalize(vec3(gl_FragCoord.x - window_width / 2, gl_FragCoord.y - window_height / 2, CAM_DIST));
     vec3 ray_pos = camera_loc;
 
     vec3 cube_pos = vec3(4.0, 1.0, 20.0);
     mat3 cube_rot = mat3(1.0, 0.0, 0.0, 0.0, SQRT_2, -SQRT_2, 0.0, SQRT_2, SQRT_2);
 
-    bool hit = false;
+    float hit = 0.0;
     while (dot(ray_pos - camera_loc, ray_pos - camera_loc) < MAX_DIST * MAX_DIST) {
 	ray_pos += STEP_SIZE * ray_dir;
-	if (point_in_cube(inverse(cube_rot) * (ray_pos - cube_pos), 1.0)) {
-	    hit = true;
+	//if (point_in_cube(inverse(cube_rot) * (ray_pos - cube_pos), 1.0)) {
+	if (dot(mod(ray_pos + 0.5, 4.0) - 0.5, mod(ray_pos + 0.5, 4.0) - 0.5) < 0.1) {
+	    hit = 1.0;
 	    break;
 	}
     }
 
-    frag_color = hit ? vec4(0.0, 0.0, 0.0, 1.0) : vec4(SKY_COLOR, 1.0);
+    frag_color = vec4((1.0 - hit) * SKY_COLOR, 0.0);
 }

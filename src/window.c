@@ -19,12 +19,15 @@ int create_window(window_t* window) {
 
     window->_glfw_window = glfwCreateWindow(DEFAULT_WIDTH, DEFAULT_HEIGHT, "vtrace", NULL, NULL);
     PROPAGATE(window->_glfw_window, ERROR, "Couldn't create GLFW window.");
+    glfwSetInputMode(window->_glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     glfwShowWindow(window->_glfw_window);
     glfwMakeContextCurrent(window->_glfw_window);
     glViewport(0, 0, DEFAULT_WIDTH, DEFAULT_HEIGHT);
     glEnable(GL_FRAMEBUFFER_SRGB); 
     glClear(GL_COLOR_BUFFER_BIT);
+
+    glfwGetCursorPos(window->_glfw_window, &window->_last_mouse_xpos, &window->_last_mouse_ypos);
 
     return SUCCESS;
 }

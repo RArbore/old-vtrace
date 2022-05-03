@@ -24,6 +24,9 @@
 
 typedef struct window_t {
     GLFWwindow* _glfw_window;
+
+    double _last_mouse_xpos;
+    double _last_mouse_ypos;
     
     GLint _camera_loc_uniform;
     GLint _camera_rot_uniform;

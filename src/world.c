@@ -14,8 +14,7 @@
 
 void init_camera(camera_t* camera) {
     memset(&camera->_camera_loc, 0, 3 * sizeof(float));
-    float init_camera_rot[9] = {1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f};
-    memcpy(&camera->_camera_rot, init_camera_rot, 9 * sizeof(float));
+    memset(&camera->_camera_rot, 0, 2 * sizeof(float));
 }
 
 void init_world(world_t* world) {

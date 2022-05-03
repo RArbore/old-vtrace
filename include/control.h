@@ -10,6 +10,8 @@
     You should have received a copy of the GNU General Public License
     along with vtrace. If not, see <https://www.gnu.org/licenses/>.  */
 
+#include <math.h>
+
 #include <GLFW/glfw3.h>
 
 #include "window.h"

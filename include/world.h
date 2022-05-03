@@ -17,7 +17,7 @@
 
 typedef struct camera_t {
     float _camera_loc[3];
-    float _camera_rot[9];
+    float _camera_rot[2];
 } camera_t;
 
 void init_camera(camera_t* camera);
