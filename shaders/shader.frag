@@ -19,7 +19,8 @@
 #define SKY_COLOR vec3(0.2, 0.3, 0.8)
 
 #define MAX_DIST 100
-#define STEP_SIZE 0.1
+#define STEP_SIZE 0.001
+#define STEP_SIZE_GROWTH 0.05
 
 in vec2 position;
 
@@ -33,7 +34,7 @@ uniform uint window_height;
 
 bool point_in_cube(vec3 pos, float half_len) {
     vec3 abs_pos = abs(pos);
-    return abs_pos.x <= half_len && abs_pos.y <= half_len && abs_pos.z <= half_len;
+    return bool(int(abs_pos.x <= half_len) & int(abs_pos.y <= half_len) & int(abs_pos.z <= half_len));
 }
 
 void main() {
@@ -41,17 +42,19 @@ void main() {
     vec3 ray_dir = camera_rot_mat * normalize(vec3(gl_FragCoord.x - window_width / 2, gl_FragCoord.y - window_height / 2, CAM_DIST));
     vec3 ray_pos = camera_loc;
 
-    vec3 cube_pos = vec3(4.0, 1.0, 20.0);
-    mat3 cube_rot = mat3(1.0, 0.0, 0.0, 0.0, SQRT_2, -SQRT_2, 0.0, SQRT_2, SQRT_2);
+    vec3 cube_pos = vec3(0.0, 0.0, 0.0);
+    mat3 cube_rot = camera_rot_mat;
 
     float hit = 0.0;
+    float step_size = STEP_SIZE;
     while (dot(ray_pos - camera_loc, ray_pos - camera_loc) < MAX_DIST * MAX_DIST) {
-	ray_pos += STEP_SIZE * ray_dir;
-	//if (point_in_cube(inverse(cube_rot) * (ray_pos - cube_pos), 1.0)) {
-	if (dot(mod(ray_pos + 0.5, 4.0) - 0.5, mod(ray_pos + 0.5, 4.0) - 0.5) < 0.1) {
+	ray_pos += step_size * ray_dir;
+	vec3 marched_ray_pos = mod(ray_pos + 0.5, 4.0) - 0.5;
+	if (point_in_cube(inverse(cube_rot) * (marched_ray_pos - cube_pos), 0.1)) {
 	    hit = 1.0;
 	    break;
 	}
+	step_size += STEP_SIZE * STEP_SIZE_GROWTH;
     }
 
     frag_color = vec4((1.0 - hit) * SKY_COLOR, 0.0);
