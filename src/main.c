@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "control.h"
 #include "window.h"
 #include "render.h"
 #include "error.h"
@@ -39,13 +40,17 @@ int main(void) {
     PROPAGATE_CLEANUP_END(ERROR);
 
     while (!should_close(&window)) {
-	float dt = (float) 1e9 / get_frame_time();
-	printf("%f\n", dt);
+	float raw_dt = get_frame_time();
+	float dt = raw_dt / (float) 1e9;
+	printf("%f\n", (float) 1e9 / raw_dt);
 	glfwPollEvents();
+
 	PROPAGATE_CLEANUP_BEGIN(render_frame(&window) == SUCCESS, "Failed to render frame.");
 	destroy_window(&window);
 	glfwTerminate();
 	PROPAGATE_CLEANUP_END(ERROR);
+
+	handle_control(&window, dt);
     }
 
     destroy_window(&window);

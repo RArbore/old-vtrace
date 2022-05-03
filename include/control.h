@@ -10,33 +10,8 @@
     You should have received a copy of the GNU General Public License
     along with vtrace. If not, see <https://www.gnu.org/licenses/>.  */
 
-#ifndef WINDOW_H_
-#define WINDOW_H_
-
 #include <GLFW/glfw3.h>
-#include <GL/gl.h>
 
-#include "world.h"
-#include "error.h"
+#include "window.h"
 
-#define DEFAULT_WIDTH 800
-#define DEFAULT_HEIGHT 800
-
-typedef struct window_t {
-    GLFWwindow* _glfw_window;
-    
-    GLint _camera_loc_uniform;
-    GLint _camera_rot_uniform;
-    GLint _window_width_uniform;
-    GLint _window_height_uniform;
-
-    world_t _world;
-} window_t;
-
-int create_window(window_t*);
-
-int should_close(window_t*);
-
-void destroy_window(window_t*);
-
-#endif // WINDOW_H_
+void handle_control(window_t* window, float dt);

@@ -12,9 +12,7 @@
 
 #define GL_GLEXT_PROTOTYPES
 
-#include "window.h"
 #include "render.h"
-#include "error.h"
 
 extern char _binary_shaders_shader_vert_start;
 extern char _binary_shaders_shader_vert_end;

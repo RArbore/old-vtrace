@@ -19,6 +19,7 @@
 #include <GL/gl.h>
 
 #include "window.h"
+#include "error.h"
 
 int create_context(window_t*);
 

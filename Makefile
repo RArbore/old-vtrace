@@ -22,9 +22,11 @@ W_FLAGS=-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization
 CC_FLAGS=-g -std=c99 -Ofast -fno-signed-zeros -fno-trapping-math -frename-registers -funroll-loops -march=native -Iinclude $(W_FLAGS)
 LD_FLAGS=-lGL -lglfw
 
-build/vtrace: build/main.o build/window.o build/render.o build/world.o build/vertex.o build/fragment.o
+build/vtrace: build/main.o build/control.o build/window.o build/render.o build/world.o build/vertex.o build/fragment.o
 	$(LD) -o $@ $^ $(LD_FLAGS)
-build/main.o: src/main.c include/window.h include/render.h include/error.h
+build/main.o: src/main.c include/control.h include/window.h include/render.h include/error.h
+	$(CC) $(CC_FLAGS) -c -o $@ $<
+build/control.o: src/control.c include/control.h include/window.h include/world.h include/error.h
 	$(CC) $(CC_FLAGS) -c -o $@ $<
 build/window.o: src/window.c include/window.h include/world.h include/error.h
 	$(CC) $(CC_FLAGS) -c -o $@ $<

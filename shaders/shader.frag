@@ -18,7 +18,7 @@
 
 #define SKY_COLOR vec3(0.2, 0.3, 0.8)
 
-#define MAX_STEPS 1000
+#define MAX_DIST 100
 #define STEP_SIZE 0.1
 
 in vec2 position;
@@ -44,7 +44,7 @@ void main() {
     mat3 cube_rot = mat3(1.0, 0.0, 0.0, 0.0, SQRT_2, -SQRT_2, 0.0, SQRT_2, SQRT_2);
 
     bool hit = false;
-    for (uint i = 0; i < MAX_STEPS; ++i) {
+    while (dot(ray_pos - camera_loc, ray_pos - camera_loc) < MAX_DIST * MAX_DIST) {
 	ray_pos += STEP_SIZE * ray_dir;
 	if (point_in_cube(inverse(cube_rot) * (ray_pos - cube_pos), 1.0)) {
 	    hit = true;

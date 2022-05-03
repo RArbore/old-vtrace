@@ -11,8 +11,6 @@
     along with vtrace. If not, see <https://www.gnu.org/licenses/>.  */
 
 #include "window.h"
-#include "world.h"
-#include "error.h"
 
 int create_window(window_t* window) {
     init_world(&window->_world);
