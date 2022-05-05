@@ -18,9 +18,9 @@
 
 #define SKY_COLOR vec3(0.2, 0.3, 0.8)
 
-#define MAX_DIST 100
+#define MAX_DIST 10
 #define STEP_SIZE 0.001
-#define STEP_SIZE_GROWTH 0.05
+#define STEP_SIZE_GROWTH 0.01
 
 in vec2 position;
 
@@ -51,11 +51,11 @@ void main() {
 	ray_pos += step_size * ray_dir;
 	vec3 marched_ray_pos = mod(ray_pos + 0.5, 4.0) - 0.5;
 	if (point_in_cube(inverse(cube_rot) * (marched_ray_pos - cube_pos), 0.1)) {
-	    hit = 1.0;
-	    break;
+	    hit += 0.02;
 	}
 	step_size += STEP_SIZE * STEP_SIZE_GROWTH;
     }
+    hit = min(hit, 1.0);
 
     frag_color = vec4((1.0 - hit) * SKY_COLOR, 0.0);
 }
