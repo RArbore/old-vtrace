@@ -87,17 +87,16 @@ int32_t create_context(window_t* window) {
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
 
-    GLuint ubo;
-    glGenBuffers(1, &ubo);
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-    glBufferData(GL_UNIFORM_BUFFER, CHUNK_SIZE, NULL, GL_STATIC_DRAW);
+    glGenBuffers(1, &window->_ubo);
+    glBindBuffer(GL_UNIFORM_BUFFER, window->_ubo);
+    glBufferData(GL_UNIFORM_BUFFER, CHUNK_SIZE * sizeof(uint32_t), NULL, GL_STATIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     GLuint ubo_index = glGetUniformBlockIndex(shader_program, "chunk");
     PROPAGATE(ubo_index != GL_INVALID_INDEX, ERROR, "Couldn't find chunk uniform buffer.");
     glUniformBlockBinding(shader_program, ubo_index, 0);
 
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo_index); 
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, window->_ubo); 
 
     window->_camera_loc_uniform = glGetUniformLocation(shader_program, "camera_loc");
     PROPAGATE(window->_camera_loc_uniform != -1, ERROR, "Couldn't find camera_loc uniform.");
@@ -123,6 +122,11 @@ int32_t render_frame(window_t* window) {
     glUniform1ui(window->_window_height_uniform, DEFAULT_HEIGHT);
 
     glClear(GL_COLOR_BUFFER_BIT);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, window->_ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, CHUNK_SIZE * sizeof(uint32_t), &window->_world._chunk);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);  
+
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glfwSwapBuffers(window->_glfw_window);

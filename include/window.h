@@ -35,6 +35,8 @@ typedef struct window_t {
     GLint _window_width_uniform;
     GLint _window_height_uniform;
 
+    GLuint _ubo;
+
     world_t _world;
 } window_t;
 
