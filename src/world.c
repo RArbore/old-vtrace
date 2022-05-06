@@ -18,13 +18,22 @@ void init_camera(camera_t* camera) {
 }
 
 void init_chunk(chunk_t* chunk) {
-    memset(&chunk->_chunk_data, 0, CHUNK_SIZE * sizeof(uint32_t));
+    chunk->_chunk_data = malloc(CHUNK_SIZE * sizeof(uint32_t));
+    memset(chunk->_chunk_data, 0, CHUNK_SIZE * sizeof(uint32_t));
     for (size_t i = 0; i < CHUNK_SIZE; ++i) {
-	chunk->_chunk_data[i] = (uint32_t) 0xFFFF0000;
+	chunk->_chunk_data[i] = (uint32_t) rand() & 0xFFFFFF80;
     }
+}
+
+void destroy_chunk(chunk_t* chunk) {
+    free(chunk->_chunk_data);
 }
 
 void init_world(world_t* world) {
     init_camera(&world->_camera);
     init_chunk(&world->_chunk);
+}
+
+void destroy_world(world_t* world) {
+    destroy_chunk(&world->_chunk);
 }

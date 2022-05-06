@@ -16,13 +16,13 @@
 #define SQRT_2 1.4142135624
 #define CAM_DIST 400.0
 
-#define SKY_COLOR vec3(0.2, 0.3, 0.8)
+#define SKY_COLOR vec3(1.0, 1.0, 1.0)
 
 #define MAX_DIST 1000
 #define MAX_ITER 1000
 
-#define CHUNK_WIDTH 16
-#define CHUNK_SIZE ((CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH) >> 5)
+#define CHUNK_WIDTH 8
+#define CHUNK_SIZE (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH)
 
 in vec2 position;
 
@@ -36,7 +36,7 @@ uniform uint window_height;
 
 uniform uint time;
 
-layout (std140) uniform chunk {
+uniform chunk {
     uint _chunk_data[CHUNK_SIZE];
 };
 
@@ -54,15 +54,21 @@ float rand(uint x) {
     return float(h & 0x00FFFFFF) / float(0x00FFFFFF);
 }
 
-bool point_in_cube(ivec3 pos) {
+vec4 get_voxel(ivec3 pos) {
     if (bool(int(pos.x < 0) |
 	     int(pos.y < 0) |
 	     int(pos.z < 0) |
 	     int(pos.x >= CHUNK_WIDTH) |
 	     int(pos.y >= CHUNK_WIDTH) |
-	     int(pos.z >= CHUNK_WIDTH))) return false;
-	uint index = pos.x + pos.y * CHUNK_WIDTH + pos.z * CHUNK_WIDTH * CHUNK_WIDTH;
-    return bool(_chunk_data[index >> 7] & (1 << (index << 27 >> 27)));
+	     int(pos.z >= CHUNK_WIDTH))) return vec4(0.0);
+    uint index = pos.x + pos.y * CHUNK_WIDTH + pos.z * CHUNK_WIDTH * CHUNK_WIDTH;
+    uint voxel = _chunk_data[index];
+    return vec4(
+		float(voxel >> 24) / 255.0,
+		float((voxel >> 16) & 0x000000FF) / 255.0,
+		float((voxel >> 8) & 0x000000FF) / 255.0,
+		float(voxel & 0x000000FF) / 255.0
+		);
 }
 
 void main() {
@@ -84,7 +90,8 @@ void main() {
 	side_dist += vec3(mask) * abs(delta_dist);
 	map_pos += ivec3(vec3(mask)) * ray_step;
 	
-	if (point_in_cube(map_pos)) {
+	vec4 voxel = get_voxel(map_pos);
+	if (voxel.a > 0.0) {
 	    vec3 border = vec3(map_pos) + (-ray_step + 1) / 2;
 	    vec3 dist_xyz = (border - ray_pos) * delta_dist * vec3(mask);
 	    float dist = dist_xyz.x + dist_xyz.y + dist_xyz.z;
@@ -92,7 +99,7 @@ void main() {
 	    ray_pos += dist * ray_dir;
 	    ray_dir *= -2 * vec3(mask) + 1;
 	    uint hash = iter + time + uint(gl_FragCoord.x) + window_width * uint(gl_FragCoord.y);
-	    ray_dir += 0.02 * vec3(2.0 * rand(hash) - 1.0,
+	    ray_dir += 0.01 * vec3(2.0 * rand(hash) - 1.0,
 				   2.0 * rand(hash * 7) - 1.0,
 				   2.0 * rand(hash * 13) - 1.0);
 	    ray_dir = normalize(ray_dir);
@@ -103,7 +110,7 @@ void main() {
 	    delta_dist = 1.0 / ray_dir;
 	    side_dist = (sign(ray_dir) * (vec3(map_pos) - ray_pos) + sign(ray_dir) * 0.5 + 0.5) * abs(delta_dist);
 
-	    hit *= 0.3;
+	    hit *= voxel.xyz;
 	}
 	++iter;
     }

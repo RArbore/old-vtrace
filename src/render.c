@@ -131,7 +131,7 @@ int32_t render_frame(window_t* window) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     glBindBuffer(GL_UNIFORM_BUFFER, window->_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, CHUNK_SIZE * sizeof(uint32_t), &window->_world._chunk);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, CHUNK_SIZE * sizeof(uint32_t), window->_world._chunk._chunk_data);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);  
 
     glDrawArrays(GL_TRIANGLES, 0, 6);

@@ -38,4 +38,5 @@ int32_t should_close(window_t* window) {
 
 void destroy_window(window_t* window) {
     glfwDestroyWindow(window->_glfw_window);
+    destroy_world(&window->_world);
 }

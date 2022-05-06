@@ -31,6 +31,8 @@ static float get_frame_time() {
 }
 
 int32_t main(void) {
+    srand((uint32_t) time(NULL));
+
     PROPAGATE(glfwInit() == GLFW_TRUE, ERROR, "Couldn't initialize GLFW.");
     window_t window = {0};
     PROPAGATE(create_window(&window) == SUCCESS, ERROR, "Couldn't create a window.");

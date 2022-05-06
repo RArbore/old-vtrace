@@ -17,8 +17,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#define CHUNK_WIDTH 16
-#define CHUNK_SIZE ((CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH) >> 5)
+#define CHUNK_WIDTH 8
+#define CHUNK_SIZE (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH)
 
 typedef struct camera_t {
     float _camera_loc[3];
@@ -28,10 +28,11 @@ typedef struct camera_t {
 void init_camera(camera_t* camera);
 
 typedef struct chunk_t {
-    uint32_t _chunk_data[CHUNK_SIZE];
+    uint32_t* _chunk_data;
 } chunk_t;
 
 void init_chunk(chunk_t* chunk);
+void destroy_chunk(chunk_t* chunk);
 
 typedef struct world_t {
     camera_t _camera;
@@ -39,5 +40,6 @@ typedef struct world_t {
 } world_t;
 
 void init_world(world_t* world);
+void destroy_world(world_t* world);
 
 #endif // WORLD_H_
