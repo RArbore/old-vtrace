@@ -17,6 +17,10 @@ void init_camera(camera_t* camera) {
     memset(&camera->_camera_rot, 0, 2 * sizeof(float));
 }
 
+void init_chunk(chunk_t* chunk) {
+    memset(&chunk->_chunk_data, 0, CHUNK_SIZE);
+}
+
 void init_world(world_t* world) {
     init_camera(&world->_camera);
 }
