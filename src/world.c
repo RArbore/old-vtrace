@@ -20,14 +20,12 @@ void init_camera(camera_t* camera) {
 void init_chunk(chunk_t* chunk) {
     chunk->_chunk_data = malloc(CHUNK_SIZE * sizeof(uint32_t));
     memset(chunk->_chunk_data, 0, CHUNK_SIZE * sizeof(uint32_t));
-    for (size_t i = 0; i < CHUNK_SIZE; ++i) {
-	uint32_t voxel = (uint32_t) rand();
-	chunk->_chunk_data[i] =
-	    i % 2 == 0 &&
-	    i / CHUNK_WIDTH % 2 == 0 &&
-	    i / (CHUNK_WIDTH * CHUNK_WIDTH) % 2 == 0
-	    ? voxel | 0x000000FF : 0x00000000;
-    }
+    for (size_t i = 0; i < 64; ++i)
+	chunk->_chunk_data[i] = 0xFFFFFFFF;
+    for (size_t i = 384; i < 384 + 32; ++i)
+	chunk->_chunk_data[i] = 0x00FF0003;
+    for (size_t i = 384 + 32; i < 384 + 64; ++i)
+	chunk->_chunk_data[i] = 0xFF000001;
 }
 
 void destroy_chunk(chunk_t* chunk) {
