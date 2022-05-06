@@ -22,6 +22,9 @@
 #define STEP_SIZE 0.001
 #define STEP_SIZE_GROWTH 0.01
 
+#define CHUNK_WIDTH 16
+#define CHUNK_SIZE ((CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH) >> 5)
+
 in vec2 position;
 
 out vec4 frag_color;
@@ -31,6 +34,10 @@ uniform vec2 camera_rot;
 
 uniform uint window_width;
 uniform uint window_height;
+
+layout (std140) uniform chunk {
+    uint _chunk_data[CHUNK_SIZE];
+};
 
 bool point_in_cube(vec3 pos, float half_len) {
     vec3 abs_pos = abs(pos);
