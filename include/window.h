@@ -13,6 +13,8 @@
 #ifndef WINDOW_H_
 #define WINDOW_H_
 
+#include <stdint.h>
+
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
 
@@ -36,9 +38,9 @@ typedef struct window_t {
     world_t _world;
 } window_t;
 
-int create_window(window_t*);
+int32_t create_window(window_t*);
 
-int should_close(window_t*);
+int32_t should_close(window_t*);
 
 void destroy_window(window_t*);
 

@@ -12,7 +12,7 @@
 
 #include "window.h"
 
-int create_window(window_t* window) {
+int32_t create_window(window_t* window) {
     init_world(&window->_world);
     
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -32,7 +32,7 @@ int create_window(window_t* window) {
     return SUCCESS;
 }
 
-int should_close(window_t* window) {
+int32_t should_close(window_t* window) {
     return glfwWindowShouldClose(window->_glfw_window);
 }
 

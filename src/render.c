@@ -20,8 +20,8 @@ extern char _binary_shaders_shader_vert_end;
 extern char _binary_shaders_shader_frag_start;
 extern char _binary_shaders_shader_frag_end;
 
-static GLuint create_shader(GLenum shader_type, const char* shader_text, const int shader_len) {
-    int shader_iv = 0;
+static GLuint create_shader(GLenum shader_type, const char* shader_text, const int32_t shader_len) {
+    int32_t shader_iv = 0;
     GLuint shader = glCreateShader(shader_type);
 
     glShaderSource(shader, 1, &shader_text, &shader_len);
@@ -42,7 +42,7 @@ static GLuint create_shader(GLenum shader_type, const char* shader_text, const i
 }
 
 static GLuint create_shader_program(GLuint vertex_shader, GLuint fragment_shader) {
-    int shader_iv = 0;
+    int32_t shader_iv = 0;
     GLuint shader_program = glCreateProgram();
 
     glAttachShader(shader_program, vertex_shader);
@@ -63,16 +63,16 @@ static GLuint create_shader_program(GLuint vertex_shader, GLuint fragment_shader
     return shader_program;
 }
 
-int create_context(window_t* window) {
+int32_t create_context(window_t* window) {
     glfwMakeContextCurrent(window->_glfw_window);
 
     const char* shader_vert_start = &_binary_shaders_shader_vert_start;
     const char* shader_vert_end = &_binary_shaders_shader_vert_end;
-    const int vert_len = (int) ((size_t) shader_vert_end - (size_t) shader_vert_start);
+    const int vert_len = (int32_t) ((size_t) shader_vert_end - (size_t) shader_vert_start);
 
     const char* shader_frag_start = &_binary_shaders_shader_frag_start;
     const char* shader_frag_end = &_binary_shaders_shader_frag_end;
-    const int frag_len = (int) ((size_t) shader_frag_end - (size_t) shader_frag_start);
+    const int frag_len = (int32_t) ((size_t) shader_frag_end - (size_t) shader_frag_start);
 
     GLuint vertex_shader = create_shader(GL_VERTEX_SHADER, shader_vert_start, vert_len);
     PROPAGATE(vertex_shader, ERROR, "Couldn't create vertex shader.");
@@ -102,7 +102,7 @@ int create_context(window_t* window) {
     return SUCCESS;
 }
 
-int render_frame(window_t* window) {
+int32_t render_frame(window_t* window) {
     glfwMakeContextCurrent(window->_glfw_window);
 
     glUniform3fv(window->_camera_loc_uniform, 1, window->_world._camera._camera_loc);

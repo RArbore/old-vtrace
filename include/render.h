@@ -14,6 +14,7 @@
 #define RENDER_H_
 
 #include <stdlib.h>
+#include <stdint.h>
 
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
@@ -21,8 +22,8 @@
 #include "window.h"
 #include "error.h"
 
-int create_context(window_t*);
+int32_t create_context(window_t*);
 
-int render_frame(window_t*);
+int32_t render_frame(window_t*);
 
 #endif // RENDER_H_
