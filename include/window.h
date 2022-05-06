@@ -34,6 +34,7 @@ typedef struct window_t {
     GLint _camera_rot_uniform;
     GLint _window_width_uniform;
     GLint _window_height_uniform;
+    GLint _time_uniform;
 
     GLuint _ubo;
 

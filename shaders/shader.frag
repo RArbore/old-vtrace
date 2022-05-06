@@ -34,9 +34,25 @@ uniform vec2 camera_rot;
 uniform uint window_width;
 uniform uint window_height;
 
+uniform uint time;
+
 layout (std140) uniform chunk {
     uint _chunk_data[CHUNK_SIZE];
 };
+
+uint hash(uint x) {
+    x += x << 10u;
+    x ^= x >>  6u;
+    x += x <<  3u;
+    x ^= x >> 11u;
+    x += x << 15u;
+    return x;
+}
+
+float rand(uint x) {
+    uint h = hash(x);
+    return float(h & 0x0000FFFF) / float(0x0000FFFF);
+}
 
 bool point_in_cube(ivec3 pos) {
     if (bool(int(pos.x < 0) |
@@ -75,11 +91,15 @@ void main() {
 
 	    ray_pos += dist * ray_dir;
 	    ray_dir *= -2 * vec3(mask) + 1;
+	    ray_dir += 0.02 * vec3(rand(iter + time),
+				     rand(iter * 7 + time),
+				     rand(iter * 13 + time));
+	    ray_dir = normalize(ray_dir);
 
 	    map_pos = ivec3(floor(ray_pos));
 	    ray_step = ivec3(sign(ray_dir));
 	    
-	    delta_dist = vec3(length(ray_dir)) / ray_dir;
+	    delta_dist = 1.0 / ray_dir;
 	    side_dist = (sign(ray_dir) * (vec3(map_pos) - ray_pos) + sign(ray_dir) * 0.5 + 0.5) * abs(delta_dist);
 
 	    hit *= 0.3;

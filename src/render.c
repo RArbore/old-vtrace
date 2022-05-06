@@ -110,16 +110,23 @@ int32_t create_context(window_t* window) {
     window->_window_height_uniform = glGetUniformLocation(shader_program, "window_height");
     PROPAGATE(window->_window_height_uniform != -1, ERROR, "Couldn't find window_height uniform.");
 
+    window->_time_uniform = glGetUniformLocation(shader_program, "time");
+    PROPAGATE(window->_time_uniform != -1, ERROR, "Couldn't find time uniform.");
+
     return SUCCESS;
 }
 
 int32_t render_frame(window_t* window) {
     glfwMakeContextCurrent(window->_glfw_window);
 
+    struct timespec spec;
+    clock_gettime(CLOCK_REALTIME, &spec);
+
     glUniform3fv(window->_camera_loc_uniform, 1, window->_world._camera._camera_loc);
     glUniform2fv(window->_camera_rot_uniform, 1, window->_world._camera._camera_rot);
     glUniform1ui(window->_window_width_uniform, DEFAULT_WIDTH);
     glUniform1ui(window->_window_height_uniform, DEFAULT_HEIGHT);
+    glUniform1ui(window->_time_uniform, (GLuint) spec.tv_nsec);
 
     glClear(GL_COLOR_BUFFER_BIT);
 

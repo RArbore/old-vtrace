@@ -13,8 +13,11 @@
 #ifndef RENDER_H_
 #define RENDER_H_
 
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdlib.h>
 #include <stdint.h>
+#include <time.h>
 
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
