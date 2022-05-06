@@ -44,6 +44,17 @@ bool point_in_cube(vec3 pos, float half_len) {
     return bool(int(abs_pos.x <= half_len) & int(abs_pos.y <= half_len) & int(abs_pos.z <= half_len));
 }
 
+bool point_in_cube(ivec3 pos) {
+    if (bool(int(pos.x < 0) |
+	     int(pos.y < 0) |
+	     int(pos.z < 0) |
+	     int(pos.x >= CHUNK_WIDTH) |
+	     int(pos.y >= CHUNK_WIDTH) |
+	     int(pos.z >= CHUNK_WIDTH))) return false;
+	uint index = pos.x + pos.y * CHUNK_WIDTH + pos.z * CHUNK_WIDTH * CHUNK_WIDTH;
+    return bool(_chunk_data[index >> 5] & (1 << (index << 27 >> 27)));
+}
+
 void main() {
     mat3 camera_rot_mat = mat3(cos(camera_rot[0]), 0.0, sin(camera_rot[0]), 0.0, 1.0, 0.0, -sin(camera_rot[0]), 0.0, cos(camera_rot[0])) * mat3(1.0, 0.0, 0.0, 0.0, cos(camera_rot[1]), -sin(camera_rot[1]), 0.0, sin(camera_rot[1]), cos(camera_rot[1]));
     vec3 ray_dir = camera_rot_mat * normalize(vec3(gl_FragCoord.x - window_width / 2, gl_FragCoord.y - window_height / 2, CAM_DIST));
@@ -56,8 +67,7 @@ void main() {
     float step_size = STEP_SIZE;
     while (dot(ray_pos - camera_loc, ray_pos - camera_loc) < MAX_DIST * MAX_DIST) {
 	ray_pos += step_size * ray_dir;
-	vec3 marched_ray_pos = mod(ray_pos + 0.5, 4.0) - 0.5;
-	if (point_in_cube(inverse(cube_rot) * (marched_ray_pos - cube_pos), 0.1)) {
+	if (point_in_cube(ivec3(floor(ray_pos)))) {
 	    hit += 0.02;
 	}
 	step_size += STEP_SIZE * STEP_SIZE_GROWTH;
