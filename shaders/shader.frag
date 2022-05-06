@@ -19,6 +19,7 @@
 #define SKY_COLOR vec3(0.2, 0.3, 0.8)
 
 #define MAX_DIST 1000
+#define MAX_ITER 1000
 
 #define CHUNK_WIDTH 16
 #define CHUNK_SIZE ((CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH) >> 5)
@@ -36,11 +37,6 @@ uniform uint window_height;
 layout (std140) uniform chunk {
     uint _chunk_data[CHUNK_SIZE];
 };
-
-bool point_in_cube(vec3 pos, float half_len) {
-    vec3 abs_pos = abs(pos);
-    return bool(int(abs_pos.x <= half_len) & int(abs_pos.y <= half_len) & int(abs_pos.z <= half_len));
-}
 
 bool point_in_cube(ivec3 pos) {
     if (bool(int(pos.x < 0) |
@@ -61,21 +57,35 @@ void main() {
     ivec3 map_pos = ivec3(floor(ray_pos));
     ivec3 ray_step = ivec3(sign(ray_dir));
 
-    vec3 delta_dist = abs(vec3(length(ray_dir)) / ray_dir);
-    vec3 side_dist = (sign(ray_dir) * (vec3(map_pos) - ray_pos) + sign(ray_dir) * 0.5 + 0.5) * delta_dist;
+    vec3 delta_dist = vec3(length(ray_dir)) / ray_dir;
+    vec3 side_dist = (sign(ray_dir) * (vec3(map_pos) - ray_pos) + sign(ray_dir) * 0.5 + 0.5) * abs(delta_dist);
 
-    float hit = 0.0;
-    while (dot(vec3(map_pos) - camera_loc, vec3(map_pos) - camera_loc) < MAX_DIST * MAX_DIST) {
+    vec3 hit = SKY_COLOR;
+    uint iter = 0;
+    while (iter < MAX_ITER && dot(vec3(map_pos) - camera_loc, vec3(map_pos) - camera_loc) < MAX_DIST * MAX_DIST) {
 	bvec3 mask = lessThanEqual(side_dist.xyz, min(side_dist.yzx, side_dist.zxy));
 
-	side_dist += vec3(mask) * delta_dist;
+	side_dist += vec3(mask) * abs(delta_dist);
 	map_pos += ivec3(vec3(mask)) * ray_step;
 	
 	if (point_in_cube(map_pos)) {
-	    hit = 1.0;
-	    break;
+	    vec3 border = vec3(map_pos) + (-ray_step + 1) / 2;
+	    vec3 dist_xyz = (border - ray_pos) * delta_dist * vec3(mask);
+	    float dist = dist_xyz.x + dist_xyz.y + dist_xyz.z;
+
+	    ray_pos += dist * ray_dir;
+	    ray_dir *= -2 * vec3(mask) + 1;
+
+	    map_pos = ivec3(floor(ray_pos));
+	    ray_step = ivec3(sign(ray_dir));
+	    
+	    delta_dist = vec3(length(ray_dir)) / ray_dir;
+	    side_dist = (sign(ray_dir) * (vec3(map_pos) - ray_pos) + sign(ray_dir) * 0.5 + 0.5) * abs(delta_dist);
+
+	    hit *= 0.3;
 	}
+	++iter;
     }
 
-    frag_color = vec4((1.0 - hit) * SKY_COLOR, 0.0);
+    frag_color = vec4(hit, 0.0);
 }
