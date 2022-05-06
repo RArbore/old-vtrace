@@ -51,7 +51,7 @@ uint hash(uint x) {
 
 float rand(uint x) {
     uint h = hash(x);
-    return float(h & 0x0000FFFF) / float(0x0000FFFF);
+    return float(h & 0x00FFFFFF) / float(0x00FFFFFF);
 }
 
 bool point_in_cube(ivec3 pos) {
@@ -91,9 +91,10 @@ void main() {
 
 	    ray_pos += dist * ray_dir;
 	    ray_dir *= -2 * vec3(mask) + 1;
-	    ray_dir += 0.02 * vec3(rand(iter + time),
-				     rand(iter * 7 + time),
-				     rand(iter * 13 + time));
+	    uint hash = iter + time + uint(gl_FragCoord.x) + window_width * uint(gl_FragCoord.y);
+	    ray_dir += 0.02 * vec3(2.0 * rand(hash) - 1.0,
+				   2.0 * rand(hash * 7) - 1.0,
+				   2.0 * rand(hash * 13) - 1.0);
 	    ray_dir = normalize(ray_dir);
 
 	    map_pos = ivec3(floor(ray_pos));
