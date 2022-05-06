@@ -13,6 +13,7 @@
 #ifndef WORLD_H_
 #define WORLD_H_
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 

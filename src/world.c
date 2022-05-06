@@ -19,7 +19,9 @@ void init_camera(camera_t* camera) {
 
 void init_chunk(chunk_t* chunk) {
     memset(&chunk->_chunk_data, 0, CHUNK_SIZE * sizeof(uint32_t));
-    chunk->_chunk_data[0] = 0x00030001;
+    for (size_t i = 0; i < CHUNK_SIZE; ++i) {
+	chunk->_chunk_data[i] = (uint32_t) 0xFFFF0000;
+    }
 }
 
 void init_world(world_t* world) {

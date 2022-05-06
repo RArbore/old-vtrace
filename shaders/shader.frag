@@ -18,9 +18,7 @@
 
 #define SKY_COLOR vec3(0.2, 0.3, 0.8)
 
-#define MAX_DIST 10
-#define STEP_SIZE 0.001
-#define STEP_SIZE_GROWTH 0.01
+#define MAX_DIST 1000
 
 #define CHUNK_WIDTH 16
 #define CHUNK_SIZE ((CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH) >> 5)
@@ -52,7 +50,7 @@ bool point_in_cube(ivec3 pos) {
 	     int(pos.y >= CHUNK_WIDTH) |
 	     int(pos.z >= CHUNK_WIDTH))) return false;
 	uint index = pos.x + pos.y * CHUNK_WIDTH + pos.z * CHUNK_WIDTH * CHUNK_WIDTH;
-    return bool(_chunk_data[index >> 5] & (1 << (index << 27 >> 27)));
+    return bool(_chunk_data[index >> 7] & (1 << (index << 27 >> 27)));
 }
 
 void main() {
@@ -60,19 +58,24 @@ void main() {
     vec3 ray_dir = camera_rot_mat * normalize(vec3(gl_FragCoord.x - window_width / 2, gl_FragCoord.y - window_height / 2, CAM_DIST));
     vec3 ray_pos = camera_loc;
 
-    vec3 cube_pos = vec3(0.0, 0.0, 0.0);
-    mat3 cube_rot = camera_rot_mat;
+    ivec3 map_pos = ivec3(floor(ray_pos));
+    ivec3 ray_step = ivec3(sign(ray_dir));
+
+    vec3 delta_dist = abs(vec3(length(ray_dir)) / ray_dir);
+    vec3 side_dist = (sign(ray_dir) * (vec3(map_pos) - ray_pos) + sign(ray_dir) * 0.5 + 0.5) * delta_dist;
 
     float hit = 0.0;
-    float step_size = STEP_SIZE;
-    while (dot(ray_pos - camera_loc, ray_pos - camera_loc) < MAX_DIST * MAX_DIST) {
-	ray_pos += step_size * ray_dir;
-	if (point_in_cube(ivec3(floor(ray_pos)))) {
-	    hit += 0.02;
+    while (dot(vec3(map_pos) - camera_loc, vec3(map_pos) - camera_loc) < MAX_DIST * MAX_DIST) {
+	bvec3 mask = lessThanEqual(side_dist.xyz, min(side_dist.yzx, side_dist.zxy));
+
+	side_dist += vec3(mask) * delta_dist;
+	map_pos += ivec3(vec3(mask)) * ray_step;
+	
+	if (point_in_cube(map_pos)) {
+	    hit = 1.0;
+	    break;
 	}
-	step_size += STEP_SIZE * STEP_SIZE_GROWTH;
     }
-    hit = min(hit, 1.0);
 
     frag_color = vec4((1.0 - hit) * SKY_COLOR, 0.0);
 }
