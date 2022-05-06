@@ -21,7 +21,12 @@ void init_chunk(chunk_t* chunk) {
     chunk->_chunk_data = malloc(CHUNK_SIZE * sizeof(uint32_t));
     memset(chunk->_chunk_data, 0, CHUNK_SIZE * sizeof(uint32_t));
     for (size_t i = 0; i < CHUNK_SIZE; ++i) {
-	chunk->_chunk_data[i] = (uint32_t) rand() & 0xFFFFFF80;
+	uint32_t voxel = (uint32_t) rand();
+	chunk->_chunk_data[i] =
+	    i % 2 == 0 &&
+	    i / CHUNK_WIDTH % 2 == 0 &&
+	    i / (CHUNK_WIDTH * CHUNK_WIDTH) % 2 == 0
+	    ? voxel | 0x000000FF : 0x00000000;
     }
 }
 

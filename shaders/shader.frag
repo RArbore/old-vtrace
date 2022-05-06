@@ -16,13 +16,16 @@
 #define SQRT_2 1.4142135624
 #define CAM_DIST 400.0
 
-#define SKY_COLOR vec3(1.0, 1.0, 1.0)
+#define SKY_COLOR vec3(0.3, 0.2, 0.8)
 
 #define MAX_DIST 1000
 #define MAX_ITER 1000
 
 #define CHUNK_WIDTH 8
 #define CHUNK_SIZE (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH)
+
+#define REFLECT_MAG 0.25
+#define REFLECT_POW 3.0
 
 in vec2 position;
 
@@ -99,9 +102,10 @@ void main() {
 	    ray_pos += dist * ray_dir;
 	    ray_dir *= -2 * vec3(mask) + 1;
 	    uint hash = iter + time + uint(gl_FragCoord.x) + window_width * uint(gl_FragCoord.y);
-	    ray_dir += 0.01 * vec3(2.0 * rand(hash) - 1.0,
-				   2.0 * rand(hash * 7) - 1.0,
-				   2.0 * rand(hash * 13) - 1.0);
+	    vec3 offset = REFLECT_MAG * vec3(rand(hash),
+					     rand(hash * 7),
+					     rand(hash * 13));
+	    ray_dir += pow(2.0 * offset - REFLECT_MAG, vec3(REFLECT_POW));
 	    ray_dir = normalize(ray_dir);
 
 	    map_pos = ivec3(floor(ray_pos));
