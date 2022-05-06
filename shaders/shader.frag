@@ -26,6 +26,7 @@
 
 #define REFLECT_MAG 0.1
 #define REFLECT_POW 2.0
+#define REFLECT_DAMPEN 0.5
 
 in vec2 position;
 
@@ -87,6 +88,7 @@ void main() {
 
     vec3 hit = SKY_COLOR;
     uint iter = 0;
+    float reflectance = 1.0;
     while (iter < MAX_ITER && dot(vec3(map_pos) - camera_loc, vec3(map_pos) - camera_loc) < MAX_DIST * MAX_DIST) {
 	bvec3 mask = lessThanEqual(side_dist.xyz, min(side_dist.yzx, side_dist.zxy));
 
@@ -114,7 +116,8 @@ void main() {
 	    delta_dist = 1.0 / ray_dir;
 	    side_dist = (sign(ray_dir) * (vec3(map_pos) - ray_pos) + sign(ray_dir) * 0.5 + 0.5) * abs(delta_dist);
 
-	    hit *= voxel.xyz;
+	    hit = (hit * voxel.xyz) * reflectance + hit * (1.0 - reflectance);
+	    reflectance *= REFLECT_DAMPEN;
 	}
 	++iter;
     }
