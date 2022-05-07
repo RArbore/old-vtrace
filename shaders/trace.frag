@@ -16,7 +16,7 @@
 #define SQRT_2 1.4142135624
 #define CAM_DIST 400.0
 
-#define SKY_COLOR vec3(0.7, 0.6, 0.8)
+#define SKY_COLOR vec3(0.1, 0.1, 0.1)
 
 #define MAX_DIST 100
 #define MAX_ITER 100
@@ -132,6 +132,8 @@ void main() {
 	}
 	++iter;
     }
+    if (hit == vec3(1.0, 1.0, 1.0))
+	hit *= SKY_COLOR;
     if (!hit_light)
 	hit *= SKY_COLOR;
 
