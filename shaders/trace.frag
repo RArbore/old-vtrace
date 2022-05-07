@@ -24,11 +24,12 @@
 #define CHUNK_WIDTH 8
 #define CHUNK_SIZE (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH)
 
-#define REFLECT_MAG 0.1
-#define REFLECT_POW 2.0
+#define REFLECT_NOISE_MAG 0.1
+#define REFLECT_NOISE_POW 2.0
 #define REFLECT_DAMPEN 0.5
+#define REFLECTANCE_CUTOFF 0.01
 
-#define VOLUMETRIC_COEFF 0.05
+#define VOLUMETRIC_COEFF 0.07
 
 in vec2 position;
 
@@ -108,10 +109,10 @@ void main() {
 
 	    ray_pos += dist * ray_dir;
 	    ray_dir *= -2 * vec3(mask) + 1;
-	    vec3 offset = REFLECT_MAG * vec3(rand(hash),
+	    vec3 offset = REFLECT_NOISE_MAG * vec3(rand(hash),
 					     rand(hash * 7),
 					     rand(hash * 13));
-	    ray_dir += pow(2.0 * offset - REFLECT_MAG, vec3(REFLECT_POW));
+	    ray_dir += pow(2.0 * offset - REFLECT_NOISE_MAG, vec3(REFLECT_NOISE_POW));
 	    ray_dir = normalize(ray_dir);
 
 	    map_pos = ivec3(floor(ray_pos));
@@ -120,22 +121,22 @@ void main() {
 	    delta_dist = 1.0 / ray_dir;
 	    side_dist = (sign(ray_dir) * (vec3(map_pos) - ray_pos) + sign(ray_dir) * 0.5 + 0.5) * abs(delta_dist);
 
+	    float scattering = 1.0 - exp(-dist * VOLUMETRIC_COEFF);
+	    vec3 new_hit = (hit * (1.0 - scattering) + SKY_COLOR * scattering) * voxel_color;
+	    hit = (new_hit * voxel_color) * reflectance + hit * (1.0 - reflectance);
+	    reflectance *= REFLECT_DAMPEN;
 	    if ((voxel & 0x00000002) > 0) {
-		hit *= voxel_color;
 		hit_light = true;
 		break;
 	    }
-	    hit = (hit * voxel_color) * reflectance + hit * (1.0 - reflectance);
-	    float scattering = 1.0 - exp(-dist * VOLUMETRIC_COEFF);
-	    hit = hit * (1.0 - scattering) + SKY_COLOR * scattering;
-	    reflectance *= REFLECT_DAMPEN;
+	    if (reflectance <= REFLECTANCE_CUTOFF) iter = MAX_ITER;
 	}
 	++iter;
     }
     if (hit == vec3(1.0, 1.0, 1.0))
 	hit *= SKY_COLOR;
     if (!hit_light)
-	hit *= SKY_COLOR;
+	hit *= pow(SKY_COLOR, vec3(reflectance));
 
     frag_color = vec4(hit, 1.0);
     bright_color = vec4(hit, 1.0) * float(hit_light);
