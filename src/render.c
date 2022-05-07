@@ -207,12 +207,17 @@ int32_t render_frame(window_t* window) {
     glUniform1ui(window->_window_height_uniform, DEFAULT_HEIGHT);
     glUniform1ui(window->_time_uniform, (GLuint) spec.tv_nsec);
 
+    glBindFramebuffer(GL_FRAMEBUFFER, window->_core_fbo);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(window->_core_shader);
     glBindBuffer(GL_UNIFORM_BUFFER, window->_voxel_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, CHUNK_SIZE * sizeof(uint32_t), window->_world._chunk._chunk_data);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);  
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glUseProgram(window->_core_shader);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glUseProgram(window->_blur_shader);
     for (unsigned i = 0; i < BLUR_ITERS * 2; ++i) {
@@ -223,9 +228,14 @@ int32_t render_frame(window_t* window) {
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    glUseProgram(window->_core_shader);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glUseProgram(window->_bloom_shader);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, window->_core_color_buffers[0]);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, window->_blur_color_buffers[1]);
     glDrawArrays(GL_TRIANGLES, 0, 6);
-
+    
     glfwSwapBuffers(window->_glfw_window);
 
     GLenum error = glGetError();
