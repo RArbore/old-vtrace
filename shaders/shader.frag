@@ -16,7 +16,7 @@
 #define SQRT_2 1.4142135624
 #define CAM_DIST 400.0
 
-#define SKY_COLOR vec3(0.2, 0.2, 0.8)
+#define SKY_COLOR vec3(0.02, 0.02, 0.02)
 
 #define MAX_DIST 100
 #define MAX_ITER 100
@@ -24,7 +24,7 @@
 #define CHUNK_WIDTH 8
 #define CHUNK_SIZE (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH)
 
-#define REFLECT_MAG 0.25
+#define REFLECT_MAG 0.1
 #define REFLECT_POW 2.0
 #define REFLECT_DAMPEN 0.5
 
