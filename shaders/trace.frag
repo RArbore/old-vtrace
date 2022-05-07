@@ -132,8 +132,8 @@ void main() {
 	}
 	++iter;
     }
-    if (hit == vec3(1.0, 1.0, 1.0))
-	hit = SKY_COLOR;
+    if (!hit_light)
+	hit *= SKY_COLOR;
 
     frag_color = vec4(hit, 1.0);
     bright_color = vec4(hit, 1.0) * float(hit_light);
