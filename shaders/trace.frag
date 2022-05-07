@@ -27,9 +27,8 @@
 #define REFLECT_NOISE_MAG 0.1
 #define REFLECT_NOISE_POW 2.0
 #define REFLECT_DAMPEN 0.5
-#define REFLECTANCE_CUTOFF 0.01
 
-#define VOLUMETRIC_COEFF 0.07
+#define VOLUMETRIC_COEFF 0.1
 
 in vec2 position;
 
@@ -122,21 +121,19 @@ void main() {
 	    side_dist = (sign(ray_dir) * (vec3(map_pos) - ray_pos) + sign(ray_dir) * 0.5 + 0.5) * abs(delta_dist);
 
 	    float scattering = 1.0 - exp(-dist * VOLUMETRIC_COEFF);
-	    vec3 new_hit = (hit * (1.0 - scattering) + SKY_COLOR * scattering) * voxel_color;
-	    hit = (new_hit * voxel_color) * reflectance + hit * (1.0 - reflectance);
+	    vec3 new_hit = hit * voxel_color * (1.0 - scattering) + SKY_COLOR * scattering;
+	    hit = new_hit * reflectance + hit * (1.0 - reflectance);
 	    reflectance *= REFLECT_DAMPEN;
 	    if ((voxel & 0x00000002) > 0) {
 		hit_light = true;
 		break;
 	    }
-	    if (reflectance <= REFLECTANCE_CUTOFF) iter = MAX_ITER;
+	    if (reflectance <= 0.0) iter = MAX_ITER;
 	}
 	++iter;
     }
     if (hit == vec3(1.0, 1.0, 1.0))
-	hit *= SKY_COLOR;
-    if (!hit_light)
-	hit *= pow(SKY_COLOR, vec3(reflectance));
+	hit = SKY_COLOR;
 
     frag_color = vec4(hit, 1.0);
     bright_color = vec4(hit, 1.0) * float(hit_light);
