@@ -196,11 +196,16 @@ int32_t create_context(window_t* window) {
     window->_horizontal_uniform = glGetUniformLocation(window->_blur_shader, "horizontal");
     PROPAGATE(window->_horizontal_uniform != -1, ERROR, "Couldn't find horizontal uniform.");
 
+    glUseProgram(window->_bloom_shader);
+    GLint image_uniform = glGetUniformLocation(window->_bloom_shader, "image");
+    PROPAGATE(image_uniform != -1, ERROR, "Couldn't find image uniform");
+    GLint bloom_uniform = glGetUniformLocation(window->_bloom_shader, "bloom");
+    PROPAGATE(bloom_uniform != -1, ERROR, "Couldn't find bloom uniform");
+    glUniform1i(image_uniform, 0);
+    glUniform1i(bloom_uniform, 1);
+
     return SUCCESS;
 }
-
-#define CHECK_GL_ERROR {						\
-    }
 
 int32_t render_frame(window_t* window) {
     glfwMakeContextCurrent(window->_glfw_window);
@@ -228,6 +233,7 @@ int32_t render_frame(window_t* window) {
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(window->_blur_shader);
+    glActiveTexture(GL_TEXTURE0);
     for (unsigned i = 0; i < BLUR_ITERS * 2; ++i) {
 	glBindFramebuffer(GL_FRAMEBUFFER, window->_blur_fbos[i % 2]);
 	glUniform1f(window->_horizontal_uniform, (float) (i % 2));

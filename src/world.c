@@ -22,7 +22,7 @@ void init_chunk(chunk_t* chunk) {
     memset(chunk->_chunk_data, 0, CHUNK_SIZE * sizeof(uint32_t));
     for (size_t i = 0; i < CHUNK_SIZE; ++i) {
 	chunk->_chunk_data[i] = (uint32_t) rand();
-	if (rand() % 10 > 0)
+	if (rand() % 10 > 1)
 	    chunk->_chunk_data[i] &= 0xFFFFFFFD;
 	if (rand() % 10 > 3)
 	    chunk->_chunk_data[i] = 0;
