@@ -15,10 +15,10 @@
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec2 in_tex_coords;
 
-out vec2 out_tex_coords;
+out vec2 tex_coords;
 
 void main()
 {
-    out_tex_coords = in_tex_coords;
+    tex_coords = in_tex_coords;
     gl_Position = vec4(position, 1.0);
 }

@@ -29,6 +29,8 @@ extern char _binary_shaders_blur_frag_end;
 extern char _binary_shaders_bloom_frag_start;
 extern char _binary_shaders_bloom_frag_end;
 
+static const unsigned BLUR_ITERS = 5;
+
 static GLuint create_shader(GLenum shader_type, const char* shader_text, const int32_t shader_len) {
     int32_t shader_iv = 0;
     GLuint shader = glCreateShader(shader_type);
@@ -112,7 +114,15 @@ int32_t create_context(window_t* window) {
 
     GLuint core_shaders[] = {rect_shader, trace_shader};
     window->_core_shader = create_shader_program(core_shaders, 2);
-    PROPAGATE(window->_core_shader, ERROR, "Couldn't create shader program.");
+    PROPAGATE(window->_core_shader, ERROR, "Couldn't create core shader program.");
+
+    GLuint blur_shaders[] = {tex_shader, blur_shader};
+    window->_blur_shader = create_shader_program(blur_shaders, 2);
+    PROPAGATE(window->_blur_shader, ERROR, "Couldn't create blur shader program.");
+
+    GLuint bloom_shaders[] = {tex_shader, bloom_shader};
+    window->_bloom_shader = create_shader_program(bloom_shaders, 2);
+    PROPAGATE(window->_bloom_shader, ERROR, "Couldn't create bloom shader program.");
 
     glDeleteShader(rect_shader);
     glDeleteShader(tex_shader);
@@ -132,23 +142,37 @@ int32_t create_context(window_t* window) {
 
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, window->_voxel_ubo); 
 
-    /*
     glGenFramebuffers(1, &window->_core_fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, window->_core_fbo);
+    glGenTextures(2, window->_core_color_buffers);
 
-    glGenTextures(2, window->_color_buffers);
+    glBindFramebuffer(GL_FRAMEBUFFER, window->_core_fbo);
     for (unsigned i = 0; i < 2; ++i) {
-	glBindTexture(GL_TEXTURE_2D, window->_color_buffers[i]);
+	glBindTexture(GL_TEXTURE_2D, window->_core_color_buffers[i]);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, i ? GL_COLOR_ATTACHMENT1 : GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, window->_color_buffers[i], 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, i ? GL_COLOR_ATTACHMENT1 : GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, window->_core_color_buffers[i], 0);
     }
     GLuint attachments[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
     glDrawBuffers(2, attachments);
-    */
+
+    glGenFramebuffers(2, window->_blur_fbos);
+    glGenTextures(2, window->_blur_color_buffers);
+
+    for (unsigned i = 0; i < 2; ++i) {
+	glBindFramebuffer(GL_FRAMEBUFFER, window->_blur_fbos[i]);
+	glBindTexture(GL_TEXTURE_2D, window->_blur_color_buffers[i]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, window->_blur_color_buffers[i], 0);
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     window->_camera_loc_uniform = glGetUniformLocation(window->_core_shader, "camera_loc");
     PROPAGATE(window->_camera_loc_uniform != -1, ERROR, "Couldn't find camera_loc uniform.");
@@ -164,6 +188,9 @@ int32_t create_context(window_t* window) {
 
     window->_time_uniform = glGetUniformLocation(window->_core_shader, "time");
     PROPAGATE(window->_time_uniform != -1, ERROR, "Couldn't find time uniform.");
+
+    window->_horizontal_uniform = glGetUniformLocation(window->_blur_shader, "horizontal");
+    PROPAGATE(window->_horizontal_uniform != -1, ERROR, "Couldn't find horizontal uniform.");
 
     return SUCCESS;
 }
@@ -187,6 +214,16 @@ int32_t render_frame(window_t* window) {
     glBufferSubData(GL_UNIFORM_BUFFER, 0, CHUNK_SIZE * sizeof(uint32_t), window->_world._chunk._chunk_data);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);  
 
+    glUseProgram(window->_blur_shader);
+    for (unsigned i = 0; i < BLUR_ITERS * 2; ++i) {
+	glBindFramebuffer(GL_FRAMEBUFFER, window->_blur_fbos[i % 2]);
+	glUniform1f(window->_horizontal_uniform, (float) (i % 2));
+	glBindTexture(GL_TEXTURE_2D, i ? window->_blur_color_buffers[i % 2 + 1] : window->_core_color_buffers[1]);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glUseProgram(window->_core_shader);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glfwSwapBuffers(window->_glfw_window);
