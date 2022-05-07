@@ -14,11 +14,20 @@
 
 #include "render.h"
 
-extern char _binary_shaders_shader_vert_start;
-extern char _binary_shaders_shader_vert_end;
+extern char _binary_shaders_rect_vert_start;
+extern char _binary_shaders_rect_vert_end;
 
-extern char _binary_shaders_shader_frag_start;
-extern char _binary_shaders_shader_frag_end;
+extern char _binary_shaders_tex_vert_start;
+extern char _binary_shaders_tex_vert_end;
+
+extern char _binary_shaders_trace_frag_start;
+extern char _binary_shaders_trace_frag_end;
+
+extern char _binary_shaders_blur_frag_start;
+extern char _binary_shaders_blur_frag_end;
+
+extern char _binary_shaders_bloom_frag_start;
+extern char _binary_shaders_bloom_frag_end;
 
 static GLuint create_shader(GLenum shader_type, const char* shader_text, const int32_t shader_len) {
     int32_t shader_iv = 0;
@@ -41,12 +50,12 @@ static GLuint create_shader(GLenum shader_type, const char* shader_text, const i
     return shader;
 }
 
-static GLuint create_shader_program(GLuint vertex_shader, GLuint fragment_shader) {
+static GLuint create_shader_program(GLuint* shaders, unsigned num_shaders) {
     int32_t shader_iv = 0;
     GLuint shader_program = glCreateProgram();
 
-    glAttachShader(shader_program, vertex_shader);
-    glAttachShader(shader_program, fragment_shader);
+    for (unsigned i = 0; i < num_shaders; ++i)
+	glAttachShader(shader_program, shaders[i]);
     glLinkProgram(shader_program);
     
     glGetProgramiv(shader_program, GL_LINK_STATUS, &shader_iv);
@@ -66,51 +75,94 @@ static GLuint create_shader_program(GLuint vertex_shader, GLuint fragment_shader
 int32_t create_context(window_t* window) {
     glfwMakeContextCurrent(window->_glfw_window);
 
-    const char* shader_vert_start = &_binary_shaders_shader_vert_start;
-    const char* shader_vert_end = &_binary_shaders_shader_vert_end;
-    const int vert_len = (int32_t) ((size_t) shader_vert_end - (size_t) shader_vert_start);
+    const char* rect_vert_start = &_binary_shaders_rect_vert_start;
+    const char* rect_vert_end = &_binary_shaders_rect_vert_end;
+    const int rect_len = (int32_t) ((size_t) rect_vert_end - (size_t) rect_vert_start);
 
-    const char* shader_frag_start = &_binary_shaders_shader_frag_start;
-    const char* shader_frag_end = &_binary_shaders_shader_frag_end;
-    const int frag_len = (int32_t) ((size_t) shader_frag_end - (size_t) shader_frag_start);
+    const char* tex_vert_start = &_binary_shaders_tex_vert_start;
+    const char* tex_vert_end = &_binary_shaders_tex_vert_end;
+    const int tex_len = (int32_t) ((size_t) tex_vert_end - (size_t) tex_vert_start);
 
-    GLuint vertex_shader = create_shader(GL_VERTEX_SHADER, shader_vert_start, vert_len);
-    PROPAGATE(vertex_shader, ERROR, "Couldn't create vertex shader.");
+    const char* trace_frag_start = &_binary_shaders_trace_frag_start;
+    const char* trace_frag_end = &_binary_shaders_trace_frag_end;
+    const int trace_len = (int32_t) ((size_t) trace_frag_end - (size_t) trace_frag_start);
 
-    GLuint fragment_shader = create_shader(GL_FRAGMENT_SHADER, shader_frag_start, frag_len);
-    PROPAGATE(fragment_shader, ERROR, "Couldn't create fragment shader.");
+    const char* blur_frag_start = &_binary_shaders_blur_frag_start;
+    const char* blur_frag_end = &_binary_shaders_blur_frag_end;
+    const int blur_len = (int32_t) ((size_t) blur_frag_end - (size_t) blur_frag_start);
 
-    GLuint shader_program = create_shader_program(vertex_shader, fragment_shader);
-    PROPAGATE(shader_program, ERROR, "Couldn't create shader program.");
+    const char* bloom_frag_start = &_binary_shaders_bloom_frag_start;
+    const char* bloom_frag_end = &_binary_shaders_bloom_frag_end;
+    const int bloom_len = (int32_t) ((size_t) bloom_frag_end - (size_t) bloom_frag_start);
 
-    glUseProgram(shader_program);
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
+    GLuint rect_shader = create_shader(GL_VERTEX_SHADER, rect_vert_start, rect_len);
+    PROPAGATE(rect_shader, ERROR, "Couldn't create rect shader.");
 
-    glGenBuffers(1, &window->_ubo);
-    glBindBuffer(GL_UNIFORM_BUFFER, window->_ubo);
+    GLuint tex_shader = create_shader(GL_VERTEX_SHADER, tex_vert_start, tex_len);
+    PROPAGATE(tex_shader, ERROR, "Couldn't create tex shader.");
+
+    GLuint trace_shader = create_shader(GL_FRAGMENT_SHADER, trace_frag_start, trace_len);
+    PROPAGATE(trace_shader, ERROR, "Couldn't create trace shader.");
+
+    GLuint blur_shader = create_shader(GL_FRAGMENT_SHADER, blur_frag_start, blur_len);
+    PROPAGATE(blur_shader, ERROR, "Couldn't create blur shader.");
+
+    GLuint bloom_shader = create_shader(GL_FRAGMENT_SHADER, bloom_frag_start, bloom_len);
+    PROPAGATE(bloom_shader, ERROR, "Couldn't create bloom shader.");
+
+    GLuint core_shaders[] = {rect_shader, trace_shader};
+    window->_core_shader = create_shader_program(core_shaders, 2);
+    PROPAGATE(window->_core_shader, ERROR, "Couldn't create shader program.");
+
+    glDeleteShader(rect_shader);
+    glDeleteShader(tex_shader);
+    glDeleteShader(trace_shader);
+    glDeleteShader(blur_shader);
+    glDeleteShader(bloom_shader);
+    glUseProgram(window->_core_shader);
+
+    glGenBuffers(1, &window->_voxel_ubo);
+    glBindBuffer(GL_UNIFORM_BUFFER, window->_voxel_ubo);
     glBufferData(GL_UNIFORM_BUFFER, CHUNK_SIZE * sizeof(uint32_t), NULL, GL_STATIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    GLuint ubo_index = glGetUniformBlockIndex(shader_program, "chunk");
+    GLuint ubo_index = glGetUniformBlockIndex(window->_core_shader, "chunk");
     PROPAGATE(ubo_index != GL_INVALID_INDEX, ERROR, "Couldn't find chunk uniform buffer.");
-    glUniformBlockBinding(shader_program, ubo_index, 0);
+    glUniformBlockBinding(window->_core_shader, ubo_index, 0);
 
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, window->_ubo); 
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, window->_voxel_ubo); 
 
-    window->_camera_loc_uniform = glGetUniformLocation(shader_program, "camera_loc");
+    /*
+    glGenFramebuffers(1, &window->_core_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, window->_core_fbo);
+
+    glGenTextures(2, window->_color_buffers);
+    for (unsigned i = 0; i < 2; ++i) {
+	glBindTexture(GL_TEXTURE_2D, window->_color_buffers[i]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, i ? GL_COLOR_ATTACHMENT1 : GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, window->_color_buffers[i], 0);
+    }
+    GLuint attachments[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+    glDrawBuffers(2, attachments);
+    */
+
+    window->_camera_loc_uniform = glGetUniformLocation(window->_core_shader, "camera_loc");
     PROPAGATE(window->_camera_loc_uniform != -1, ERROR, "Couldn't find camera_loc uniform.");
 
-    window->_camera_rot_uniform = glGetUniformLocation(shader_program, "camera_rot");
+    window->_camera_rot_uniform = glGetUniformLocation(window->_core_shader, "camera_rot");
     PROPAGATE(window->_camera_rot_uniform != -1, ERROR, "Couldn't find camera_rot uniform.");
 
-    window->_window_width_uniform = glGetUniformLocation(shader_program, "window_width");
+    window->_window_width_uniform = glGetUniformLocation(window->_core_shader, "window_width");
     PROPAGATE(window->_window_width_uniform != -1, ERROR, "Couldn't find window_width uniform.");
 
-    window->_window_height_uniform = glGetUniformLocation(shader_program, "window_height");
+    window->_window_height_uniform = glGetUniformLocation(window->_core_shader, "window_height");
     PROPAGATE(window->_window_height_uniform != -1, ERROR, "Couldn't find window_height uniform.");
 
-    window->_time_uniform = glGetUniformLocation(shader_program, "time");
+    window->_time_uniform = glGetUniformLocation(window->_core_shader, "time");
     PROPAGATE(window->_time_uniform != -1, ERROR, "Couldn't find time uniform.");
 
     return SUCCESS;
@@ -130,7 +182,8 @@ int32_t render_frame(window_t* window) {
 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glBindBuffer(GL_UNIFORM_BUFFER, window->_ubo);
+    glUseProgram(window->_core_shader);
+    glBindBuffer(GL_UNIFORM_BUFFER, window->_voxel_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, CHUNK_SIZE * sizeof(uint32_t), window->_world._chunk._chunk_data);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);  
 

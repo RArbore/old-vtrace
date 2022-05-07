@@ -28,7 +28,7 @@ else
 	LD_FLAGS=-lm -lGL -lglfw
 endif
 
-build/vtrace: build/main.o build/control.o build/window.o build/render.o build/world.o build/vertex.o build/fragment.o
+build/vtrace: build/main.o build/control.o build/window.o build/render.o build/world.o build/rect.o build/tex.o build/trace.o build/blur.o build/bloom.o
 	$(LD) -o $@ $^ $(LD_FLAGS)
 build/main.o: src/main.c include/control.h include/window.h include/render.h include/error.h
 	$(CC) $(CC_FLAGS) -c -o $@ $<
@@ -41,9 +41,15 @@ build/render.o: src/render.c include/window.h include/render.h include/error.h
 build/world.o: src/world.c include/world.h
 	$(CC) $(CC_FLAGS) -c -o $@ $<
 
-build/vertex.o: shaders/shader.vert
+build/rect.o: shaders/rect.vert
 	$(OBJ) --input binary --output elf64-x86-64 $< $@
-build/fragment.o: shaders/shader.frag
+build/tex.o: shaders/tex.vert
+	$(OBJ) --input binary --output elf64-x86-64 $< $@
+build/trace.o: shaders/trace.frag
+	$(OBJ) --input binary --output elf64-x86-64 $< $@
+build/blur.o: shaders/blur.frag
+	$(OBJ) --input binary --output elf64-x86-64 $< $@
+build/bloom.o: shaders/bloom.frag
 	$(OBJ) --input binary --output elf64-x86-64 $< $@
 
 exe: build/vtrace

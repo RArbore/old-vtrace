@@ -30,7 +30,8 @@
 
 in vec2 position;
 
-out vec4 frag_color;
+layout (location = 0) out vec4 frag_color;
+layout (location = 1) out vec4 bright_color;
 
 uniform vec3 camera_loc;
 uniform vec2 camera_rot;
@@ -130,5 +131,6 @@ void main() {
     if (!hit_light)
 	hit *= SKY_COLOR;
 
-    frag_color = vec4(hit, 0.0);
+    frag_color = vec4(hit, 1.0);
+    bright_color = vec4(hit, 1.0) * float(hit_light);
 }

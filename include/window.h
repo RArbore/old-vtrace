@@ -36,7 +36,14 @@ typedef struct window_t {
     GLint _window_height_uniform;
     GLint _time_uniform;
 
-    GLuint _ubo;
+    GLuint _core_shader;
+    GLuint _blur_shader;
+    GLuint _bloom_shader;
+
+    GLuint _voxel_ubo;
+    GLuint _core_fbo;
+    GLuint _blur_fbos[2];
+    GLuint _color_buffers[2];
 
     world_t _world;
 } window_t;
