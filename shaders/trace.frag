@@ -16,7 +16,7 @@
 #define SQRT_2 1.4142135624
 #define CAM_DIST 400.0
 
-#define SKY_COLOR vec3(0.1, 0.1, 0.1)
+#define SKY_COLOR vec3(0.2, 0.2, 0.2)
 
 #define MAX_DIST 100
 #define MAX_ITER 100
@@ -85,6 +85,7 @@ void main() {
 
     vec3 hit = vec3(1.0, 1.0, 1.0);
     uint iter = 0;
+    uint num_hits = 0;
     float reflectance = 1.0;
     bool hit_light = false;
     while (iter < MAX_ITER && dot(vec3(map_pos) - camera_loc, vec3(map_pos) - camera_loc) < MAX_DIST * MAX_DIST) {
@@ -96,7 +97,7 @@ void main() {
 	uint voxel = get_voxel(map_pos);
 	uint hash = iter + time + uint(gl_FragCoord.x) + window_width * uint(gl_FragCoord.y);
 	if ((voxel & 0x00000001) != 0) {
-
+	    ++num_hits;
 	    vec3 voxel_color = vec3(
 				    float(voxel >> 24) / 255.0,
 				    float((voxel >> 16) & 0x000000FF) / 255.0,
@@ -133,6 +134,8 @@ void main() {
 	++iter;
     }
     if (!hit_light)
+	hit *= SKY_COLOR;
+    if (num_hits == 0)
 	hit *= SKY_COLOR;
 
     frag_color = vec4(hit, 1.0);
