@@ -12,13 +12,22 @@
 
 #version 460 core
 
-layout (location = 0) in vec3 position;
-layout (location = 1) in vec2 in_tex_coords;
+const vec2 positions[6] = vec2[]
+    (
+     vec2(-1.0, -1.0),
+     vec2(1.0, -1.0),
+     vec2(-1.0, 1.0),
+     vec2(1.0, 1.0),
+     vec2(-1.0, 1.0),
+     vec2(1.0, -1.0)
+     );
+
+layout (location = 0) in vec2 in_tex_coords;
 
 out vec2 tex_coords;
 
 void main()
 {
     tex_coords = in_tex_coords;
-    gl_Position = vec4(position, 1.0);
+    gl_Position = vec4(positions[gl_VertexID], 0.0, 1.0);
 }

@@ -157,6 +157,8 @@ int32_t create_context(window_t* window) {
     }
     GLuint attachments[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
     glDrawBuffers(2, attachments);
+    PROPAGATE(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, ERROR, "Core framebuffer not complete.");
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glGenFramebuffers(2, window->_blur_fbos);
     glGenTextures(2, window->_blur_color_buffers);
@@ -170,6 +172,9 @@ int32_t create_context(window_t* window) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, window->_blur_color_buffers[i], 0);
+	PROPAGATE_CLEANUP_BEGIN(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Blurring framebuffer not complete.");
+	printf("Framebuffer number that's not complete: %u\n", i);
+	PROPAGATE_CLEANUP_END(ERROR);
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -195,30 +200,33 @@ int32_t create_context(window_t* window) {
     return SUCCESS;
 }
 
+#define CHECK_GL_ERROR {						\
+    }
+
 int32_t render_frame(window_t* window) {
     glfwMakeContextCurrent(window->_glfw_window);
 
     struct timespec spec;
     clock_gettime(CLOCK_REALTIME, &spec);
 
+    glBindFramebuffer(GL_FRAMEBUFFER, window->_core_fbo);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glUseProgram(window->_core_shader);
     glUniform3fv(window->_camera_loc_uniform, 1, window->_world._camera._camera_loc);
     glUniform2fv(window->_camera_rot_uniform, 1, window->_world._camera._camera_rot);
     glUniform1ui(window->_window_width_uniform, DEFAULT_WIDTH);
     glUniform1ui(window->_window_height_uniform, DEFAULT_HEIGHT);
     glUniform1ui(window->_time_uniform, (GLuint) spec.tv_nsec);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, window->_core_fbo);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glUseProgram(window->_core_shader);
     glBindBuffer(GL_UNIFORM_BUFFER, window->_voxel_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, CHUNK_SIZE * sizeof(uint32_t), window->_world._chunk._chunk_data);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);  
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(window->_core_shader);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(window->_blur_shader);
     for (unsigned i = 0; i < BLUR_ITERS * 2; ++i) {
 	glBindFramebuffer(GL_FRAMEBUFFER, window->_blur_fbos[i % 2]);
@@ -226,8 +234,8 @@ int32_t render_frame(window_t* window) {
 	glBindTexture(GL_TEXTURE_2D, i ? window->_blur_color_buffers[i % 2 + 1] : window->_core_color_buffers[1]);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
     }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(window->_bloom_shader);
     glActiveTexture(GL_TEXTURE0);
@@ -237,7 +245,6 @@ int32_t render_frame(window_t* window) {
     glDrawArrays(GL_TRIANGLES, 0, 6);
     
     glfwSwapBuffers(window->_glfw_window);
-
     GLenum error = glGetError();
     PROPAGATE_CLEANUP_BEGIN(error == GL_NO_ERROR, "Encountered a GL error:");
     printf("Error code: 0x%x\n", error);
