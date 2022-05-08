@@ -16,7 +16,7 @@
 #define SQRT_2 1.4142135624
 #define CAM_DIST 400.0
 
-#define SKY_COLOR vec3(0.0, 0.0, 0.0)
+#define SKY_COLOR vec3(0.01, 0.01, 0.01)
 
 #define MAX_DIST 100
 #define MAX_ITER 100
@@ -26,7 +26,7 @@
 
 #define REFLECT_NOISE_MAG 0.1
 #define REFLECT_NOISE_POW 2.0
-#define REFLECT_DAMPEN 0.1
+#define REFLECT_DAMPEN 0.01
 
 #define VOLUMETRIC_COEFF 0.1
 

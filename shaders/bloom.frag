@@ -20,10 +20,6 @@ uniform sampler2D image;
 uniform sampler2D bloom;
 
 void main() {
-    const float gamma = 2.2;
-    
     const vec3 combined = clamp(texture(image, tex_coords).rgb + texture(bloom, tex_coords).rgb, 0.0, 1.0);
-    vec3 mapped = combined / (combined + vec3(1.0));
-    mapped = pow(mapped, vec3(1.0 / gamma));
-    frag_color = vec4(mapped, 1.0);
+    frag_color = vec4(combined, 1.0);
 }
