@@ -16,7 +16,7 @@
 #define SQRT_2 1.4142135624
 #define CAM_DIST 400.0
 
-#define SKY_COLOR vec3(0.2, 0.2, 0.2)
+#define SKY_COLOR vec3(0.01, 0.01, 0.01)
 
 #define MAX_DIST 100
 #define MAX_ITER 100
@@ -26,7 +26,7 @@
 
 #define REFLECT_NOISE_MAG 0.1
 #define REFLECT_NOISE_POW 2.0
-#define REFLECT_DAMPEN 0.5
+#define REFLECT_DAMPEN 0.001
 
 #define VOLUMETRIC_COEFF 0.1
 
@@ -123,20 +123,19 @@ void main() {
 
 	    float scattering = 1.0 - exp(-dist * VOLUMETRIC_COEFF);
 	    vec3 new_hit = hit * voxel_color * (1.0 - scattering) + SKY_COLOR * scattering;
-	    hit = new_hit * reflectance + hit * (1.0 - reflectance);
+	    hit *= pow(new_hit, vec3(reflectance));
 	    reflectance *= REFLECT_DAMPEN;
 	    if ((voxel & 0x00000002) > 0) {
 		hit_light = true;
+		reflectance = 0.0;
 		break;
 	    }
 	    if (reflectance <= 0.0) iter = MAX_ITER;
 	}
 	++iter;
     }
-    if (!hit_light)
-	hit *= SKY_COLOR;
-    if (num_hits == 0)
-	hit *= SKY_COLOR;
+    if (reflectance > 0.0)
+	hit *= pow(SKY_COLOR, vec3(reflectance));
 
     frag_color = vec4(hit, 1.0);
     bright_color = vec4(hit, 1.0) * float(hit_light);
