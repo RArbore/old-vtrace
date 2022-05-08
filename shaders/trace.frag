@@ -26,7 +26,7 @@
 
 #define REFLECT_NOISE_MAG 0.1
 #define REFLECT_NOISE_POW 2.0
-#define REFLECT_DAMPEN 0.001
+#define REFLECT_DAMPEN 0.1
 
 #define VOLUMETRIC_COEFF 0.1
 
@@ -85,9 +85,8 @@ void main() {
 
     vec3 hit = vec3(1.0, 1.0, 1.0);
     uint iter = 0;
-    uint num_hits = 0;
     float reflectance = 1.0;
-    bool hit_light = false;
+    float hit_light = 0.0;
     while (iter < MAX_ITER && dot(vec3(map_pos) - camera_loc, vec3(map_pos) - camera_loc) < MAX_DIST * MAX_DIST) {
 	bvec3 mask = lessThanEqual(side_dist.xyz, min(side_dist.yzx, side_dist.zxy));
 
@@ -97,7 +96,6 @@ void main() {
 	uint voxel = get_voxel(map_pos);
 	uint hash = iter + time + uint(gl_FragCoord.x) + window_width * uint(gl_FragCoord.y);
 	if ((voxel & 0x00000001) != 0) {
-	    ++num_hits;
 	    vec3 voxel_color = vec3(
 				    float(voxel >> 24) / 255.0,
 				    float((voxel >> 16) & 0x000000FF) / 255.0,
@@ -121,22 +119,20 @@ void main() {
 	    delta_dist = 1.0 / ray_dir;
 	    side_dist = (sign(ray_dir) * (vec3(map_pos) - ray_pos) + sign(ray_dir) * 0.5 + 0.5) * abs(delta_dist);
 
-	    float scattering = 1.0 - exp(-dist * VOLUMETRIC_COEFF);
-	    vec3 new_hit = hit * voxel_color * (1.0 - scattering) + SKY_COLOR * scattering;
+	    float scattering = exp(-dist * VOLUMETRIC_COEFF);
+	    vec3 new_hit = voxel_color * scattering + SKY_COLOR * (1.0 - scattering);
 	    hit *= pow(new_hit, vec3(reflectance));
-	    reflectance *= REFLECT_DAMPEN;
 	    if ((voxel & 0x00000002) > 0) {
-		hit_light = true;
+		hit_light = reflectance;
 		reflectance = 0.0;
 		break;
 	    }
-	    if (reflectance <= 0.0) iter = MAX_ITER;
+	    reflectance *= REFLECT_DAMPEN;
 	}
 	++iter;
     }
-    if (reflectance > 0.0)
-	hit *= pow(SKY_COLOR, vec3(reflectance));
+    hit *= pow(SKY_COLOR, vec3(reflectance));
 
     frag_color = vec4(hit, 1.0);
-    bright_color = vec4(hit, 1.0) * float(hit_light);
+    bright_color = vec4(hit, 1.0) * hit_light;
 }
