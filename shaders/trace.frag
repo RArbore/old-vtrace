@@ -16,7 +16,7 @@
 #define SQRT_2 1.4142135624
 #define CAM_DIST 400.0
 
-#define SKY_COLOR vec3(0.01, 0.01, 0.01)
+#define SKY_COLOR vec3(0.0, 0.0, 0.0)
 
 #define MAX_DIST 100
 #define MAX_ITER 100
@@ -131,7 +131,8 @@ void main() {
 	}
 	++iter;
     }
-    hit *= pow(SKY_COLOR, vec3(reflectance));
+    if (reflectance > 0)
+	hit *= pow(SKY_COLOR, vec3(reflectance));
 
     frag_color = vec4(hit, 1.0);
     bright_color = vec4(hit, 1.0) * hit_light;
