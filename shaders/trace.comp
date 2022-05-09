@@ -30,7 +30,7 @@
 
 #define VOLUMETRIC_COEFF 0.1
 
-layout(local_size_x = 1, local_size_y = 1) in;
+layout(local_size_x = 16, local_size_y = 16) in;
 layout(rgba8, binding = 0) uniform image2D frag_color;
 layout(rgba8, binding = 1) uniform image2D bright_color;
 

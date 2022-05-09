@@ -214,7 +214,7 @@ int32_t render_frame(window_t* window) {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, window->_trace_color_buffers[1]);
 
-    glDispatchCompute(DEFAULT_WIDTH, DEFAULT_HEIGHT, 1);
+    glDispatchCompute(DEFAULT_WIDTH / 16 + 1, DEFAULT_HEIGHT / 16 + 1, 1);
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
