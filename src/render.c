@@ -158,16 +158,7 @@ int32_t create_context(window_t* window) {
     glDeleteShader(blur_shader);
     glDeleteShader(bloom_shader);
 
-    glGenBuffers(1, &window->_voxel_ubo);
-    glBindBuffer(GL_UNIFORM_BUFFER, window->_voxel_ubo);
-    glBufferData(GL_UNIFORM_BUFFER, CHUNK_SIZE * sizeof(uint32_t), NULL, GL_STATIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    GLuint ubo_index = glGetUniformBlockIndex(window->_trace_shader, "chunk");
-    PROPAGATE(ubo_index != GL_INVALID_INDEX, ERROR, "Couldn't find chunk uniform buffer.");
-    glUniformBlockBinding(window->_trace_shader, ubo_index, 0);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, window->_voxel_ubo); 
-    
+    glGenBuffers(1, &window->_voxel_ssbo);
     glGenTextures(2, window->_trace_color_buffers);
     glGenFramebuffers(2, window->_blur_fbos);
     glGenTextures(2, window->_blur_color_buffers);
@@ -210,15 +201,15 @@ int32_t render_frame(window_t* window) {
     glUniform2fv(window->_camera_rot_uniform, 1, window->_world._camera._camera_rot);
     glUniform1ui(window->_time_uniform, (GLuint) spec.tv_nsec);
 
-    glBindBuffer(GL_UNIFORM_BUFFER, window->_voxel_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, CHUNK_SIZE * sizeof(uint32_t), window->_world._chunk._chunk_data);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);  
-
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, window->_trace_color_buffers[0]);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, window->_trace_color_buffers[1]);
 
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, window->_voxel_ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, CHUNK_SIZE * sizeof(uint32_t), window->_world._chunk._chunk_data, GL_STREAM_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, window->_voxel_ssbo);
+    
     glDispatchCompute(DEFAULT_WIDTH / 16 + 1, DEFAULT_HEIGHT / 16 + 1, 1);
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
 

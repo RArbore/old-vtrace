@@ -24,7 +24,7 @@
 #define CHUNK_WIDTH 8
 #define CHUNK_SIZE (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH)
 
-#define REFLECT_NOISE_MAG 0.3
+#define REFLECT_NOISE_MAG 0.2
 #define REFLECT_NOISE_POW 2.0
 #define REFLECT_DAMPEN 0.2
 
@@ -35,15 +35,14 @@
 layout(local_size_x = 16, local_size_y = 16) in;
 layout(rgba8, binding = 0) uniform image2D frag_color;
 layout(rgba8, binding = 1) uniform image2D bright_color;
+layout(binding = 2) buffer chunk {
+    uint _chunk_data[CHUNK_SIZE];
+};
 
 uniform vec3 camera_loc;
 uniform vec2 camera_rot;
 
 uniform uint time;
-
-uniform chunk {
-    uint _chunk_data[CHUNK_SIZE];
-};
 
 uint hash(uint x) {
     x += x << 10u;
@@ -66,7 +65,7 @@ uint get_voxel(ivec3 pos) {
 	     int(pos.x >= CHUNK_WIDTH) |
 	     int(pos.y >= CHUNK_WIDTH) |
 	     int(pos.z >= CHUNK_WIDTH))) return 0;
-    uint index = pos.x + pos.y * CHUNK_WIDTH + pos.z * CHUNK_WIDTH * CHUNK_WIDTH;
+    int index = pos.x + pos.y * CHUNK_WIDTH + pos.z * CHUNK_WIDTH * CHUNK_WIDTH;
     return _chunk_data[index];
 }
 
@@ -149,7 +148,7 @@ void main() {
 	accum += hit;
 	accum_light += hit * hit_light;
     }
-    
+
     imageStore(frag_color, pixel_coords, vec4(accum / float(RAYS_PER_PIXEL), 1.0));
     imageStore(bright_color, pixel_coords, vec4(accum_light / float(RAYS_PER_PIXEL), 1.0));
 }
