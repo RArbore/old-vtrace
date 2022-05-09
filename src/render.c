@@ -74,6 +74,43 @@ static GLuint create_shader_program(GLuint* shaders, unsigned num_shaders) {
     return shader_program;
 }
 
+static int32_t setup_textures(window_t* window) {
+    for (unsigned i = 0; i < 2; ++i) {
+	glBindTexture(GL_TEXTURE_2D, window->_trace_color_buffers[i]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glBindImageTexture(i, window->_trace_color_buffers[i], 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA8);
+    }
+
+    for (unsigned i = 0; i < 2; ++i) {
+	glBindFramebuffer(GL_FRAMEBUFFER, window->_blur_fbos[i]);
+	glBindTexture(GL_TEXTURE_2D, window->_blur_color_buffers[i]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, window->_blur_color_buffers[i], 0);
+	PROPAGATE_CLEANUP_BEGIN(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Blurring framebuffer not complete.");
+	printf("Framebuffer number that's not complete: %u\n", i);
+	PROPAGATE_CLEANUP_END(ERROR);
+    }
+
+    for (unsigned i = 0; i < 2; ++i) {
+	glBindTexture(GL_TEXTURE_2D, window->_previous_color_buffers[i]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+
+    return SUCCESS;
+}
+
 int32_t create_context(window_t* window) {
     glfwMakeContextCurrent(window->_glfw_window);
 
@@ -141,34 +178,12 @@ int32_t create_context(window_t* window) {
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, window->_voxel_ubo); 
     
     glGenTextures(2, window->_trace_color_buffers);
-    for (unsigned i = 0; i < 2; ++i) {
-	glActiveTexture(i ? GL_TEXTURE1 : GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, window->_trace_color_buffers[i]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindImageTexture(i, window->_trace_color_buffers[i], 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-    }
-
     glGenFramebuffers(2, window->_blur_fbos);
     glGenTextures(2, window->_blur_color_buffers);
+    glGenTextures(2, window->_previous_color_buffers);
 
-    for (unsigned i = 0; i < 2; ++i) {
-	glBindFramebuffer(GL_FRAMEBUFFER, window->_blur_fbos[i]);
-	glBindTexture(GL_TEXTURE_2D, window->_blur_color_buffers[i]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, window->_blur_color_buffers[i], 0);
-	PROPAGATE_CLEANUP_BEGIN(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Blurring framebuffer not complete.");
-	printf("Framebuffer number that's not complete: %u\n", i);
-	PROPAGATE_CLEANUP_END(ERROR);
-    }
-
+    PROPAGATE(setup_textures(window) == SUCCESS, ERROR, "Couldn't setup textures.");
+    
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     window->_camera_loc_uniform = glGetUniformLocation(window->_trace_shader, "camera_loc");
@@ -188,8 +203,14 @@ int32_t create_context(window_t* window) {
     PROPAGATE(image_uniform != -1, ERROR, "Couldn't find image uniform");
     GLint bloom_uniform = glGetUniformLocation(window->_bloom_shader, "bloom");
     PROPAGATE(bloom_uniform != -1, ERROR, "Couldn't find bloom uniform");
+    GLint previous_image_uniform = glGetUniformLocation(window->_bloom_shader, "previous_image");
+    PROPAGATE(previous_image_uniform != -1, ERROR, "Couldn't find previous_image uniform");
+    GLint previous_bloom_uniform = glGetUniformLocation(window->_bloom_shader, "previous_bloom");
+    PROPAGATE(previous_bloom_uniform != -1, ERROR, "Couldn't find previous_bloom uniform");
     glUniform1i(image_uniform, 0);
     glUniform1i(bloom_uniform, 1);
+    glUniform1i(previous_image_uniform, 2);
+    glUniform1i(previous_bloom_uniform, 3);
 
     return SUCCESS;
 }
@@ -234,9 +255,23 @@ int32_t render_frame(window_t* window) {
     glBindTexture(GL_TEXTURE_2D, window->_trace_color_buffers[0]);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, window->_blur_color_buffers[1]);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, window->_previous_color_buffers[0]);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, window->_previous_color_buffers[1]);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     
     glfwSwapBuffers(window->_glfw_window);
+
+    GLuint temp;
+    temp = window->_trace_color_buffers[0];
+    window->_trace_color_buffers[0] = window->_previous_color_buffers[0];
+    window->_previous_color_buffers[0] = temp;
+    temp = window->_blur_color_buffers[1];
+    window->_blur_color_buffers[1] = window->_previous_color_buffers[1];
+    window->_previous_color_buffers[1] = temp;
+    PROPAGATE(setup_textures(window) == SUCCESS, ERROR, "Couldn't setup textures.");
+    
     CHECK_GL_ERROR();
     
     return SUCCESS;

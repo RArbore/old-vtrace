@@ -43,6 +43,7 @@ typedef struct window_t {
     GLuint _trace_color_buffers[2];
     GLuint _blur_fbos[2];
     GLuint _blur_color_buffers[2];
+    GLuint _previous_color_buffers[2];
 
     world_t _world;
 } window_t;
