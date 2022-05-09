@@ -14,12 +14,12 @@
 
 #define M_PI 3.1415926535
 #define SQRT_2 1.4142135624
-#define CAM_DIST 400.0
+#define CAM_DIST 300.0
 
 #define SKY_COLOR vec3(0.5, 0.5, 0.5)
 
-#define MAX_DIST 100
-#define MAX_ITER 100
+#define MAX_DIST 200
+#define MAX_ITER 200
 
 #define CHUNK_WIDTH 64
 #define CHUNK_SIZE (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH)

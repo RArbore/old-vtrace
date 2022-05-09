@@ -12,7 +12,7 @@
 
 #include "control.h"
 
-#define MOVE_SPEED 10.0f
+#define MOVE_SPEED 25.0f
 
 void handle_control(window_t* window, float dt) {
     glfwMakeContextCurrent(window->_glfw_window);
