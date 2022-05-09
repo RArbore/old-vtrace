@@ -99,15 +99,6 @@ static int32_t setup_textures(window_t* window) {
 	PROPAGATE_CLEANUP_END(ERROR);
     }
 
-    for (unsigned i = 0; i < 2; ++i) {
-	glBindTexture(GL_TEXTURE_2D, window->_previous_color_buffers[i]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    }
-
     return SUCCESS;
 }
 
@@ -180,7 +171,6 @@ int32_t create_context(window_t* window) {
     glGenTextures(2, window->_trace_color_buffers);
     glGenFramebuffers(2, window->_blur_fbos);
     glGenTextures(2, window->_blur_color_buffers);
-    glGenTextures(2, window->_previous_color_buffers);
 
     PROPAGATE(setup_textures(window) == SUCCESS, ERROR, "Couldn't setup textures.");
     
@@ -203,14 +193,8 @@ int32_t create_context(window_t* window) {
     PROPAGATE(image_uniform != -1, ERROR, "Couldn't find image uniform");
     GLint bloom_uniform = glGetUniformLocation(window->_bloom_shader, "bloom");
     PROPAGATE(bloom_uniform != -1, ERROR, "Couldn't find bloom uniform");
-    GLint previous_image_uniform = glGetUniformLocation(window->_bloom_shader, "previous_image");
-    PROPAGATE(previous_image_uniform != -1, ERROR, "Couldn't find previous_image uniform");
-    GLint previous_bloom_uniform = glGetUniformLocation(window->_bloom_shader, "previous_bloom");
-    PROPAGATE(previous_bloom_uniform != -1, ERROR, "Couldn't find previous_bloom uniform");
     glUniform1i(image_uniform, 0);
     glUniform1i(bloom_uniform, 1);
-    glUniform1i(previous_image_uniform, 2);
-    glUniform1i(previous_bloom_uniform, 3);
 
     return SUCCESS;
 }
@@ -255,23 +239,9 @@ int32_t render_frame(window_t* window) {
     glBindTexture(GL_TEXTURE_2D, window->_trace_color_buffers[0]);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, window->_blur_color_buffers[1]);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, window->_previous_color_buffers[0]);
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, window->_previous_color_buffers[1]);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     
     glfwSwapBuffers(window->_glfw_window);
-
-    GLuint temp;
-    temp = window->_trace_color_buffers[0];
-    window->_trace_color_buffers[0] = window->_previous_color_buffers[0];
-    window->_previous_color_buffers[0] = temp;
-    temp = window->_blur_color_buffers[1];
-    window->_blur_color_buffers[1] = window->_previous_color_buffers[1];
-    window->_previous_color_buffers[1] = temp;
-    PROPAGATE(setup_textures(window) == SUCCESS, ERROR, "Couldn't setup textures.");
-    
     CHECK_GL_ERROR();
     
     return SUCCESS;
