@@ -24,7 +24,7 @@
 #define CHUNK_WIDTH 8
 #define CHUNK_SIZE (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH)
 
-#define REFLECT_NOISE_MAG 0.1
+#define REFLECT_NOISE_MAG 0.3
 #define REFLECT_NOISE_POW 2.0
 #define REFLECT_DAMPEN 0.2
 
@@ -72,7 +72,7 @@ void main() {
     ivec2 image_dims = imageSize(frag_color);
     ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
     const mat3 camera_rot_mat = mat3(cos(camera_rot[0]), 0.0, sin(camera_rot[0]), 0.0, 1.0, 0.0, -sin(camera_rot[0]), 0.0, cos(camera_rot[0])) * mat3(1.0, 0.0, 0.0, 0.0, cos(camera_rot[1]), -sin(camera_rot[1]), 0.0, sin(camera_rot[1]), cos(camera_rot[1]));
-    vec3 ray_dir = camera_rot_mat * normalize(vec3(pixel_coords.x - image_dims.x / 2, pixel_coords.y - image_dims.y / 2, CAM_DIST));
+    vec3 ray_dir = camera_rot_mat * normalize(vec3(pixel_coords.x - image_dims.x / 2 + 0.0000001, pixel_coords.y - image_dims.y / 2 + 0.0000001, CAM_DIST));
     vec3 ray_pos = camera_loc;
 
     ivec3 map_pos = ivec3(floor(ray_pos));
