@@ -25,6 +25,13 @@
 #include "window.h"
 #include "error.h"
 
+#define CHECK_GL_ERROR() {						\
+	GLenum error = glGetError();					\
+	PROPAGATE_CLEANUP_BEGIN(error == GL_NO_ERROR, "Encountered a generic GL error:"); \
+	printf("Error code: 0x%x, occurred at line %d.\n", error, __LINE__); \
+	PROPAGATE_CLEANUP_END(ERROR);					\
+    }
+
 int32_t create_context(window_t*);
 
 int32_t render_frame(window_t*);

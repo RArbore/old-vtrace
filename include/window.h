@@ -32,19 +32,16 @@ typedef struct window_t {
     
     GLint _camera_loc_uniform;
     GLint _camera_rot_uniform;
-    GLint _window_width_uniform;
-    GLint _window_height_uniform;
     GLint _time_uniform;
     GLint _horizontal_uniform;
 
-    GLuint _core_shader;
+    GLuint _trace_shader;
     GLuint _blur_shader;
     GLuint _bloom_shader;
 
     GLuint _voxel_ubo;
-    GLuint _core_fbo;
+    GLuint _trace_color_buffers[2];
     GLuint _blur_fbos[2];
-    GLuint _core_color_buffers[2];
     GLuint _blur_color_buffers[2];
 
     world_t _world;

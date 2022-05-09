@@ -45,7 +45,7 @@ build/rect.o: shaders/rect.vert
 	$(OBJ) --input binary --output elf64-x86-64 $< $@
 build/tex.o: shaders/tex.vert
 	$(OBJ) --input binary --output elf64-x86-64 $< $@
-build/trace.o: shaders/trace.frag
+build/trace.o: shaders/trace.comp
 	$(OBJ) --input binary --output elf64-x86-64 $< $@
 build/blur.o: shaders/blur.frag
 	$(OBJ) --input binary --output elf64-x86-64 $< $@

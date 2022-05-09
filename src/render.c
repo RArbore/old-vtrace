@@ -20,8 +20,8 @@ extern char _binary_shaders_rect_vert_end;
 extern char _binary_shaders_tex_vert_start;
 extern char _binary_shaders_tex_vert_end;
 
-extern char _binary_shaders_trace_frag_start;
-extern char _binary_shaders_trace_frag_end;
+extern char _binary_shaders_trace_comp_start;
+extern char _binary_shaders_trace_comp_end;
 
 extern char _binary_shaders_blur_frag_start;
 extern char _binary_shaders_blur_frag_end;
@@ -85,9 +85,9 @@ int32_t create_context(window_t* window) {
     const char* tex_vert_end = &_binary_shaders_tex_vert_end;
     const int tex_len = (int32_t) ((size_t) tex_vert_end - (size_t) tex_vert_start);
 
-    const char* trace_frag_start = &_binary_shaders_trace_frag_start;
-    const char* trace_frag_end = &_binary_shaders_trace_frag_end;
-    const int trace_len = (int32_t) ((size_t) trace_frag_end - (size_t) trace_frag_start);
+    const char* trace_comp_start = &_binary_shaders_trace_comp_start;
+    const char* trace_comp_end = &_binary_shaders_trace_comp_end;
+    const int trace_len = (int32_t) ((size_t) trace_comp_end - (size_t) trace_comp_start);
 
     const char* blur_frag_start = &_binary_shaders_blur_frag_start;
     const char* blur_frag_end = &_binary_shaders_blur_frag_end;
@@ -103,7 +103,7 @@ int32_t create_context(window_t* window) {
     GLuint tex_shader = create_shader(GL_VERTEX_SHADER, tex_vert_start, tex_len);
     PROPAGATE(tex_shader, ERROR, "Couldn't create tex shader.");
 
-    GLuint trace_shader = create_shader(GL_FRAGMENT_SHADER, trace_frag_start, trace_len);
+    GLuint trace_shader = create_shader(GL_COMPUTE_SHADER, trace_comp_start, trace_len);
     PROPAGATE(trace_shader, ERROR, "Couldn't create trace shader.");
 
     GLuint blur_shader = create_shader(GL_FRAGMENT_SHADER, blur_frag_start, blur_len);
@@ -112,9 +112,9 @@ int32_t create_context(window_t* window) {
     GLuint bloom_shader = create_shader(GL_FRAGMENT_SHADER, bloom_frag_start, bloom_len);
     PROPAGATE(bloom_shader, ERROR, "Couldn't create bloom shader.");
 
-    GLuint core_shaders[] = {rect_shader, trace_shader};
-    window->_core_shader = create_shader_program(core_shaders, 2);
-    PROPAGATE(window->_core_shader, ERROR, "Couldn't create core shader program.");
+    GLuint trace_shaders[] = {trace_shader};
+    window->_trace_shader = create_shader_program(trace_shaders, 1);
+    PROPAGATE(window->_trace_shader, ERROR, "Couldn't create trace shader program.");
 
     GLuint blur_shaders[] = {tex_shader, blur_shader};
     window->_blur_shader = create_shader_program(blur_shaders, 2);
@@ -135,29 +135,22 @@ int32_t create_context(window_t* window) {
     glBufferData(GL_UNIFORM_BUFFER, CHUNK_SIZE * sizeof(uint32_t), NULL, GL_STATIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    GLuint ubo_index = glGetUniformBlockIndex(window->_core_shader, "chunk");
+    GLuint ubo_index = glGetUniformBlockIndex(window->_trace_shader, "chunk");
     PROPAGATE(ubo_index != GL_INVALID_INDEX, ERROR, "Couldn't find chunk uniform buffer.");
-    glUniformBlockBinding(window->_core_shader, ubo_index, 0);
-
+    glUniformBlockBinding(window->_trace_shader, ubo_index, 0);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, window->_voxel_ubo); 
-
-    glGenFramebuffers(1, &window->_core_fbo);
-    glGenTextures(2, window->_core_color_buffers);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, window->_core_fbo);
+    
+    glGenTextures(2, window->_trace_color_buffers);
     for (unsigned i = 0; i < 2; ++i) {
-	glBindTexture(GL_TEXTURE_2D, window->_core_color_buffers[i]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glActiveTexture(i ? GL_TEXTURE1 : GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, window->_trace_color_buffers[i]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, i ? GL_COLOR_ATTACHMENT1 : GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, window->_core_color_buffers[i], 0);
+	glBindImageTexture(i, window->_trace_color_buffers[i], 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
     }
-    GLuint attachments[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-    glDrawBuffers(2, attachments);
-    PROPAGATE(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, ERROR, "Core framebuffer not complete.");
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glGenFramebuffers(2, window->_blur_fbos);
     glGenTextures(2, window->_blur_color_buffers);
@@ -178,19 +171,13 @@ int32_t create_context(window_t* window) {
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    window->_camera_loc_uniform = glGetUniformLocation(window->_core_shader, "camera_loc");
+    window->_camera_loc_uniform = glGetUniformLocation(window->_trace_shader, "camera_loc");
     PROPAGATE(window->_camera_loc_uniform != -1, ERROR, "Couldn't find camera_loc uniform.");
 
-    window->_camera_rot_uniform = glGetUniformLocation(window->_core_shader, "camera_rot");
+    window->_camera_rot_uniform = glGetUniformLocation(window->_trace_shader, "camera_rot");
     PROPAGATE(window->_camera_rot_uniform != -1, ERROR, "Couldn't find camera_rot uniform.");
 
-    window->_window_width_uniform = glGetUniformLocation(window->_core_shader, "window_width");
-    PROPAGATE(window->_window_width_uniform != -1, ERROR, "Couldn't find window_width uniform.");
-
-    window->_window_height_uniform = glGetUniformLocation(window->_core_shader, "window_height");
-    PROPAGATE(window->_window_height_uniform != -1, ERROR, "Couldn't find window_height uniform.");
-
-    window->_time_uniform = glGetUniformLocation(window->_core_shader, "time");
+    window->_time_uniform = glGetUniformLocation(window->_trace_shader, "time");
     PROPAGATE(window->_time_uniform != -1, ERROR, "Couldn't find time uniform.");
 
     window->_horizontal_uniform = glGetUniformLocation(window->_blur_shader, "horizontal");
@@ -213,23 +200,22 @@ int32_t render_frame(window_t* window) {
     struct timespec spec;
     clock_gettime(CLOCK_REALTIME, &spec);
 
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, window->_core_fbo);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glUseProgram(window->_core_shader);
+    glUseProgram(window->_trace_shader);
     glUniform3fv(window->_camera_loc_uniform, 1, window->_world._camera._camera_loc);
     glUniform2fv(window->_camera_rot_uniform, 1, window->_world._camera._camera_rot);
-    glUniform1ui(window->_window_width_uniform, DEFAULT_WIDTH);
-    glUniform1ui(window->_window_height_uniform, DEFAULT_HEIGHT);
     glUniform1ui(window->_time_uniform, (GLuint) spec.tv_nsec);
 
     glBindBuffer(GL_UNIFORM_BUFFER, window->_voxel_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, CHUNK_SIZE * sizeof(uint32_t), window->_world._chunk._chunk_data);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);  
 
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, window->_trace_color_buffers[0]);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, window->_trace_color_buffers[1]);
+
+    glDispatchCompute(DEFAULT_WIDTH, DEFAULT_HEIGHT, 1);
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(window->_blur_shader);
@@ -237,7 +223,7 @@ int32_t render_frame(window_t* window) {
     for (unsigned i = 0; i < BLUR_ITERS * 2; ++i) {
 	glBindFramebuffer(GL_FRAMEBUFFER, window->_blur_fbos[i % 2]);
 	glUniform1f(window->_horizontal_uniform, (float) (i % 2));
-	glBindTexture(GL_TEXTURE_2D, i ? window->_blur_color_buffers[(i + 1) % 2] : window->_core_color_buffers[1]);
+	glBindTexture(GL_TEXTURE_2D, i ? window->_blur_color_buffers[(i + 1) % 2] : window->_trace_color_buffers[1]);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -245,16 +231,13 @@ int32_t render_frame(window_t* window) {
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(window->_bloom_shader);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, window->_core_color_buffers[0]);
+    glBindTexture(GL_TEXTURE_2D, window->_trace_color_buffers[0]);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, window->_blur_color_buffers[1]);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     
     glfwSwapBuffers(window->_glfw_window);
-    GLenum error = glGetError();
-    PROPAGATE_CLEANUP_BEGIN(error == GL_NO_ERROR, "Encountered a GL error:");
-    printf("Error code: 0x%x\n", error);
-    PROPAGATE_CLEANUP_END(ERROR);
+    CHECK_GL_ERROR();
     
     return SUCCESS;
 }
