@@ -21,22 +21,22 @@
 #define MAX_DIST 100
 #define MAX_ITER 100
 
-#define CHUNK_WIDTH 8
+#define CHUNK_WIDTH 64
 #define CHUNK_SIZE (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH)
 
 #define REFLECT_NOISE_MAG 0.2
 #define REFLECT_NOISE_POW 2.0
 #define REFLECT_DAMPEN 0.2
 
-#define VOLUMETRIC_COEFF 0.1
+#define VOLUMETRIC_COEFF 0.01
 
 #define RAYS_PER_PIXEL 8
 
 layout(local_size_x = 16, local_size_y = 16) in;
-layout(rgba8, binding = 0) uniform image2D frag_color;
-layout(rgba8, binding = 1) uniform image2D bright_color;
+layout(binding = 0) writeonly uniform image2D frag_color;
+layout(binding = 1) writeonly uniform image2D bright_color;
 layout(binding = 2) buffer chunk {
-    uint _chunk_data[CHUNK_SIZE];
+    uint _chunk_data[];
 };
 
 uniform vec3 camera_loc;

@@ -36,7 +36,7 @@ build/control.o: src/control.c include/control.h include/window.h include/world.
 	$(CC) $(CC_FLAGS) -c -o $@ $<
 build/window.o: src/window.c include/window.h include/world.h include/error.h
 	$(CC) $(CC_FLAGS) -c -o $@ $<
-build/render.o: src/render.c include/window.h include/render.h include/error.h
+build/render.o: src/render.c include/window.h include/world.h include/render.h include/error.h
 	$(CC) $(CC_FLAGS) -c -o $@ $<
 build/world.o: src/world.c include/world.h
 	$(CC) $(CC_FLAGS) -c -o $@ $<
