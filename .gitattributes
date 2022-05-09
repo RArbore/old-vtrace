@@ -1,0 +1,2 @@
+*.comp linguist-language=GLSL
+*.el -linguist-detectable
