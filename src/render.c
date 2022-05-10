@@ -207,11 +207,10 @@ int32_t render_frame(window_t* window) {
     glBindTexture(GL_TEXTURE_2D, window->_trace_color_buffers[1]);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, window->_voxel_ssbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, CHUNK_SIZE * sizeof(uint32_t), window->_world._chunk._chunk_data, GL_STREAM_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, CHUNK_SIZE * sizeof(uint32_t), window->_world._chunk._chunk_data, GL_STREAM_READ);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, window->_voxel_ssbo);
     
-    glDispatchCompute(DEFAULT_WIDTH / 16 + 1, DEFAULT_HEIGHT / 16 + 1, 1);
-    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+    glDispatchCompute(DEFAULT_WIDTH / 8 + 1, DEFAULT_HEIGHT / 8 + 1, 1);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(window->_blur_shader);
