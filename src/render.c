@@ -173,8 +173,8 @@ int32_t create_context(window_t* window) {
     window->_camera_rot_uniform = glGetUniformLocation(window->_trace_shader, "camera_rot");
     PROPAGATE(window->_camera_rot_uniform != -1, ERROR, "Couldn't find camera_rot uniform.");
 
-    window->_time_uniform = glGetUniformLocation(window->_trace_shader, "time");
-    PROPAGATE(window->_time_uniform != -1, ERROR, "Couldn't find time uniform.");
+    window->_rand_uniform = glGetUniformLocation(window->_trace_shader, "rand");
+    PROPAGATE(window->_rand_uniform != -1, ERROR, "Couldn't find rand uniform.");
 
     window->_blend_uniform = glGetUniformLocation(window->_trace_shader, "blend");
     PROPAGATE(window->_blend_uniform != -1, ERROR, "Couldn't find blend uniform.");
@@ -196,13 +196,10 @@ int32_t create_context(window_t* window) {
 int32_t render_frame(window_t* window) {
     glfwMakeContextCurrent(window->_glfw_window);
 
-    struct timespec spec;
-    clock_gettime(CLOCK_REALTIME, &spec);
-
     glUseProgram(window->_trace_shader);
     glUniform3fv(window->_camera_loc_uniform, 1, window->_world._camera._camera_loc);
     glUniform2fv(window->_camera_rot_uniform, 1, window->_world._camera._camera_rot);
-    glUniform1ui(window->_time_uniform, (GLuint) spec.tv_nsec);
+    glUniform1ui(window->_rand_uniform, (GLuint) rand());
     glUniform1ui(window->_blend_uniform, (GLuint) window->_moved);
 
     glActiveTexture(GL_TEXTURE0);

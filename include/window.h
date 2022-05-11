@@ -33,7 +33,7 @@ typedef struct window_t {
     
     GLint _camera_loc_uniform;
     GLint _camera_rot_uniform;
-    GLint _time_uniform;
+    GLint _rand_uniform;
     GLint _blend_uniform;
     GLint _horizontal_uniform;
 
