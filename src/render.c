@@ -176,6 +176,9 @@ int32_t create_context(window_t* window) {
     window->_time_uniform = glGetUniformLocation(window->_trace_shader, "time");
     PROPAGATE(window->_time_uniform != -1, ERROR, "Couldn't find time uniform.");
 
+    window->_blend_uniform = glGetUniformLocation(window->_trace_shader, "blend");
+    PROPAGATE(window->_blend_uniform != -1, ERROR, "Couldn't find blend uniform.");
+
     window->_horizontal_uniform = glGetUniformLocation(window->_blur_shader, "horizontal");
     PROPAGATE(window->_horizontal_uniform != -1, ERROR, "Couldn't find horizontal uniform.");
 
@@ -200,6 +203,7 @@ int32_t render_frame(window_t* window) {
     glUniform3fv(window->_camera_loc_uniform, 1, window->_world._camera._camera_loc);
     glUniform2fv(window->_camera_rot_uniform, 1, window->_world._camera._camera_rot);
     glUniform1ui(window->_time_uniform, (GLuint) spec.tv_nsec);
+    glUniform1ui(window->_blend_uniform, (GLuint) window->_moved);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, window->_trace_color_buffers[0]);

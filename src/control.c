@@ -16,34 +16,43 @@
 
 void handle_control(window_t* window, float dt) {
     glfwMakeContextCurrent(window->_glfw_window);
+    window->_moved = 0;
 
     if (glfwGetKey(window->_glfw_window, GLFW_KEY_W)) {
 	window->_world._camera._camera_loc[2] += MOVE_SPEED * cosf(window->_world._camera._camera_rot[0]) * dt;
 	window->_world._camera._camera_loc[0] -= MOVE_SPEED * sinf(window->_world._camera._camera_rot[0]) * dt;
+	window->_moved = 1;
     }
     if (glfwGetKey(window->_glfw_window, GLFW_KEY_S)) {
 	window->_world._camera._camera_loc[2] -= MOVE_SPEED * cosf(window->_world._camera._camera_rot[0]) * dt;
 	window->_world._camera._camera_loc[0] += MOVE_SPEED * sinf(window->_world._camera._camera_rot[0]) * dt;
+	window->_moved = 1;
     }
     if (glfwGetKey(window->_glfw_window, GLFW_KEY_A)) {
 	window->_world._camera._camera_loc[0] -= MOVE_SPEED * cosf(window->_world._camera._camera_rot[0]) * dt;
 	window->_world._camera._camera_loc[2] -= MOVE_SPEED * sinf(window->_world._camera._camera_rot[0]) * dt;
+	window->_moved = 1;
     }
     if (glfwGetKey(window->_glfw_window, GLFW_KEY_D)) {
 	window->_world._camera._camera_loc[0] += MOVE_SPEED * cosf(window->_world._camera._camera_rot[0]) * dt;
 	window->_world._camera._camera_loc[2] += MOVE_SPEED * sinf(window->_world._camera._camera_rot[0]) * dt;
+	window->_moved = 1;
     }
     if (glfwGetKey(window->_glfw_window, GLFW_KEY_SPACE)) {
 	window->_world._camera._camera_loc[1] += MOVE_SPEED * dt;
+	window->_moved = 1;
     }
     if (glfwGetKey(window->_glfw_window, GLFW_KEY_LEFT_SHIFT)) {
 	window->_world._camera._camera_loc[1] -= MOVE_SPEED * dt;
+	window->_moved = 1;
     }
 
     double new_xpos, new_ypos;
     glfwGetCursorPos(window->_glfw_window, &new_xpos, &new_ypos);
     window->_world._camera._camera_rot[0] -= (float) (new_xpos - window->_last_mouse_xpos) / DEFAULT_WIDTH;
     window->_world._camera._camera_rot[1] -= (float) (new_ypos - window->_last_mouse_ypos) / DEFAULT_HEIGHT;
+    if (new_xpos != window->_last_mouse_xpos || new_ypos != window->_last_mouse_ypos)
+	window->_moved = 1;
     window->_last_mouse_xpos = new_xpos;
     window->_last_mouse_ypos = new_ypos;
 }

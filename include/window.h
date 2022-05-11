@@ -29,10 +29,12 @@ typedef struct window_t {
 
     double _last_mouse_xpos;
     double _last_mouse_ypos;
+    unsigned _moved;
     
     GLint _camera_loc_uniform;
     GLint _camera_rot_uniform;
     GLint _time_uniform;
+    GLint _blend_uniform;
     GLint _horizontal_uniform;
 
     GLuint _trace_shader;
