@@ -40,7 +40,7 @@ typedef struct window_t {
     GLuint _bloom_shader;
 
     GLuint _voxel_ssbo;
-    GLuint _trace_color_buffers[2];
+    GLuint _trace_color_buffers[4];
     GLuint _blur_fbos[2];
     GLuint _blur_color_buffers[2];
 

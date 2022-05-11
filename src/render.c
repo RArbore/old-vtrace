@@ -75,7 +75,7 @@ static GLuint create_shader_program(GLuint* shaders, unsigned num_shaders) {
 }
 
 static int32_t setup_textures(window_t* window) {
-    for (unsigned i = 0; i < 2; ++i) {
+    for (unsigned i = 0; i < 4; ++i) {
 	glBindTexture(GL_TEXTURE_2D, window->_trace_color_buffers[i]);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -159,7 +159,7 @@ int32_t create_context(window_t* window) {
     glDeleteShader(bloom_shader);
 
     glGenBuffers(1, &window->_voxel_ssbo);
-    glGenTextures(2, window->_trace_color_buffers);
+    glGenTextures(4, window->_trace_color_buffers);
     glGenFramebuffers(2, window->_blur_fbos);
     glGenTextures(2, window->_blur_color_buffers);
 
@@ -208,7 +208,7 @@ int32_t render_frame(window_t* window) {
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, window->_voxel_ssbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, CHUNK_SIZE * sizeof(uint32_t), window->_world._chunk._chunk_data, GL_STREAM_READ);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, window->_voxel_ssbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, window->_voxel_ssbo);
     
     glDispatchCompute(DEFAULT_WIDTH / 8 + 1, DEFAULT_HEIGHT / 8 + 1, 1);
 

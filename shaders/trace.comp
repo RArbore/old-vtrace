@@ -24,18 +24,22 @@
 #define CHUNK_WIDTH 64
 #define CHUNK_SIZE (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH)
 
-#define REFLECT_NOISE_MAG 0.2
+#define REFLECT_NOISE_MAG 0.4
 #define REFLECT_NOISE_POW 2.0
-#define REFLECT_DAMPEN 0.2
+#define REFLECT_DAMPEN 1.0
 
 #define VOLUMETRIC_COEFF 0.01
 
 #define RAYS_PER_PIXEL 8
 
+#define BLENDING 0.9
+
 layout(local_size_x = 8, local_size_y = 8) in;
-layout(binding = 0) writeonly uniform image2D frag_color;
-layout(binding = 1) writeonly uniform image2D bright_color;
-layout(binding = 2) buffer chunk {
+layout(binding = 0, rgba8) writeonly uniform image2D frag_color;
+layout(binding = 1, rgba8) writeonly uniform image2D bright_color;
+layout(binding = 2, rgba8) uniform image2D prev_frag_color;
+layout(binding = 3, rgba8) uniform image2D prev_bright_color;
+layout(binding = 4) buffer chunk {
     uint _chunk_data[];
 };
 
@@ -149,6 +153,14 @@ void main() {
 	accum_light += hit * hit_light;
     }
 
-    imageStore(frag_color, pixel_coords, vec4(accum / float(RAYS_PER_PIXEL), 1.0));
-    imageStore(bright_color, pixel_coords, vec4(accum_light / float(RAYS_PER_PIXEL), 1.0));
+    const vec4 prev_frag_color_pixel = imageLoad(prev_frag_color, pixel_coords);
+    const vec4 prev_bright_color_pixel = imageLoad(prev_bright_color, pixel_coords);
+
+    const vec4 new_frag_color_pixel = BLENDING * prev_frag_color_pixel + (1.0 - BLENDING) * vec4(accum / float(RAYS_PER_PIXEL), 1.0);
+    const vec4 new_bright_color_pixel = BLENDING * prev_bright_color_pixel + (1.0 - BLENDING) * vec4(accum_light / float(RAYS_PER_PIXEL), 1.0);
+
+    imageStore(frag_color, pixel_coords, new_frag_color_pixel);
+    imageStore(bright_color, pixel_coords, new_bright_color_pixel);
+    imageStore(prev_frag_color, pixel_coords, new_frag_color_pixel);
+    imageStore(prev_bright_color, pixel_coords, new_bright_color_pixel);
 }
