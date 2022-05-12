@@ -16,7 +16,7 @@
 #define SQRT_2 1.4142135624
 #define CAM_DIST 300.0
 
-#define SKY_COLOR vec3(0.01, 0.01, 0.01)
+#define SKY_COLOR vec3(0.4, 0.4, 0.4)
 
 #define MAX_DIST 200
 #define MAX_ITER 200
@@ -30,7 +30,7 @@
 
 #define VOLUMETRIC_COEFF 0.05
 
-#define RAYS_PER_PIXEL 12
+#define RAYS_PER_PIXEL 32
 
 #define BLENDING 0.95
 
@@ -127,7 +127,7 @@ void main() {
 		ray_pos += dist * ray_dir;
 		ray_dir *= -2 * vec3(mask) + 1;
 
-		uint hash = hash(gl_GlobalInvocationID.x) + hash(gl_GlobalInvocationID.y + 3) + hash(gl_GlobalInvocationID.z + 5) + ray_num + iter + rand + uint(pixel_coords.x) + uint(pixel_coords.y);
+		uint hash = rand * (hash(gl_GlobalInvocationID.x) + hash(gl_GlobalInvocationID.y * 3) + hash(gl_GlobalInvocationID.z * 5) + ray_num + iter + uint(pixel_coords.x) + uint(pixel_coords.y));
 		vec3 offset = 2.0 * vec3(randf(hash),
 					 randf(hash * 7),
 					 randf(hash * 13)) - 1.0;
@@ -141,8 +141,7 @@ void main() {
 		side_dist = (sign(ray_dir) * (vec3(map_pos) - ray_pos) + sign(ray_dir) * 0.5 + 0.5) * abs(delta_dist);
 		
 		if ((voxel & 0x00000002) > 0) {
-		    float scattering = exp(-dist * VOLUMETRIC_COEFF);
-		    vec3 new_hit = voxel_color * scattering + SKY_COLOR * (1.0 - scattering);
+		    vec3 new_hit = voxel_color;
 		    hit *= new_hit;
 		    hit_light = 1.0;
 		    in_flight = 0.0;
@@ -152,8 +151,7 @@ void main() {
 		    hit *= abs(dot(ray_dir, vec3(mask)));
 		}
 		else {
-		    float scattering = exp(-dist * VOLUMETRIC_COEFF);
-		    vec3 new_hit = voxel_color * scattering + SKY_COLOR * (1.0 - scattering);
+		    vec3 new_hit = voxel_color * SKY_COLOR;
 		    hit *= new_hit;
 		    in_flight = 0.0;
 		    break;
