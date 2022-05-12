@@ -20,13 +20,15 @@ void init_camera(camera_t* camera) {
 void init_chunk(chunk_t* chunk) {
     chunk->_chunk_data = malloc(CHUNK_SIZE * sizeof(uint32_t));
     memset(chunk->_chunk_data, 0, CHUNK_SIZE * sizeof(uint32_t));
-    for (size_t i = 0; i < CHUNK_SIZE; ++i) {
-	chunk->_chunk_data[i] = (uint32_t) rand();
-	if (rand() % 10 > 1)
-	    chunk->_chunk_data[i] &= 0xFFFFFFFD;
-	if (rand() % 10 > 3)
-	    chunk->_chunk_data[i] = 0;
-    }
+    for (size_t x = 0; x < 17; ++x)
+	for (size_t z = 0; z < 17; ++z)
+	    chunk->_chunk_data[x + z * CHUNK_WIDTH * CHUNK_WIDTH] = 0xFFFFFF01;
+    for (size_t x = 0; x < 17; ++x)
+	for (size_t y = 1; y < 17; ++y)
+	    for (size_t z = 0; z < 17; ++z)
+		if ((x - 8) * (x - 8) + (z - 8) * (z - 8) <= 4 * 4) {
+		    chunk->_chunk_data[x + y * CHUNK_WIDTH + z * CHUNK_WIDTH * CHUNK_WIDTH] = y % 2 ? 0x88888801 : 0x88888803;
+		}
 }
 
 void destroy_chunk(chunk_t* chunk) {
