@@ -28,7 +28,7 @@
 #define REFLECT_NOISE_POW 3.0
 #define REFLECT_PROB 0.7
 
-#define VOLUMETRIC_COEFF 0.05
+#define VOLUMETRIC_COEFF 0.01
 
 #define RAYS_PER_PIXEL 32
 
@@ -160,8 +160,10 @@ void main() {
 	    ++iter;
 	}
 	
-	if (in_flight > 0)
-	    hit *= pow(SKY_COLOR, vec3(in_flight));
+	hit *= SKY_COLOR * in_flight + vec3(1.0 - in_flight);
+
+	const float scattering = exp(-total_dist * VOLUMETRIC_COEFF);
+	hit = hit * scattering + SKY_COLOR * (1.0 - scattering);
 
 	accum += hit;
 	accum_light += hit * hit_light;
