@@ -16,6 +16,7 @@ int32_t create_window(window_t* window) {
     init_world(&window->_world);
     
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     window->_glfw_window = glfwCreateWindow(DEFAULT_WIDTH, DEFAULT_HEIGHT, "vtrace", NULL, NULL);
     PROPAGATE(window->_glfw_window, ERROR, "Couldn't create GLFW window.");
@@ -25,6 +26,7 @@ int32_t create_window(window_t* window) {
     glfwMakeContextCurrent(window->_glfw_window);
     glViewport(0, 0, DEFAULT_WIDTH, DEFAULT_HEIGHT);
     glEnable(GL_FRAMEBUFFER_SRGB); 
+    glEnable(GL_MULTISAMPLE);  
     glClear(GL_COLOR_BUFFER_BIT);
 
     glfwGetCursorPos(window->_glfw_window, &window->_last_mouse_xpos, &window->_last_mouse_ypos);

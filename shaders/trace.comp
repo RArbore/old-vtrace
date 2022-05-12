@@ -14,23 +14,23 @@
 
 #define PI 3.1415926535
 #define SQRT_2 1.4142135624
-#define CAM_DIST 300.0
+#define CAM_DIST 250.0
 
-#define SKY_COLOR vec3(0.4, 0.4, 0.4)
+#define SKY_COLOR vec3(0.8, 0.8, 0.8)
 
-#define MAX_DIST 200
-#define MAX_ITER 200
+#define MAX_DIST 500
+#define MAX_ITER 500
 
 #define CHUNK_WIDTH 64
 #define CHUNK_SIZE (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH)
 
-#define REFLECT_PROB 0.9
+#define REFLECT_PROB 0.7
 
-#define PHONG 8.0
+#define PHONG 32.0
 
 #define VOLUMETRIC_COEFF 0.01
 
-#define RAYS_PER_PIXEL 32
+#define RAYS_PER_PIXEL 4
 
 #define BLENDING 0.95
 

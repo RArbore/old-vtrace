@@ -21,7 +21,7 @@ uniform sampler2D bloom;
 
 void main() {
     const float gamma = 2.2;
-    const float exposure = 0.6;
+    const float exposure = 1.0;
     const vec3 combined = clamp(texture(image, tex_coords).rgb + texture(bloom, tex_coords).rgb, 0.0, 1.0);
 
     vec3 mapped = vec3(1.0) - exp(-combined * exposure);
