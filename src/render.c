@@ -29,7 +29,7 @@ extern char _binary_shaders_blur_frag_end;
 extern char _binary_shaders_bloom_frag_start;
 extern char _binary_shaders_bloom_frag_end;
 
-static const unsigned BLUR_ITERS = 5;
+static const uint32_t BLUR_ITERS = 5;
 
 static GLuint create_shader(GLenum shader_type, const char* shader_text, const int32_t shader_len) {
     int32_t shader_iv = 0;
@@ -52,11 +52,11 @@ static GLuint create_shader(GLenum shader_type, const char* shader_text, const i
     return shader;
 }
 
-static GLuint create_shader_program(GLuint* shaders, unsigned num_shaders) {
+static GLuint create_shader_program(GLuint* shaders, uint32_t num_shaders) {
     int32_t shader_iv = 0;
     GLuint shader_program = glCreateProgram();
 
-    for (unsigned i = 0; i < num_shaders; ++i)
+    for (uint32_t i = 0; i < num_shaders; ++i)
 	glAttachShader(shader_program, shaders[i]);
     glLinkProgram(shader_program);
     
@@ -75,7 +75,7 @@ static GLuint create_shader_program(GLuint* shaders, unsigned num_shaders) {
 }
 
 static int32_t setup_textures(window_t* window) {
-    for (unsigned i = 0; i < 4; ++i) {
+    for (uint32_t i = 0; i < 4; ++i) {
 	glBindTexture(GL_TEXTURE_2D, window->_trace_color_buffers[i]);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -85,7 +85,7 @@ static int32_t setup_textures(window_t* window) {
 	glBindImageTexture(i, window->_trace_color_buffers[i], 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA8);
     }
 
-    for (unsigned i = 0; i < 2; ++i) {
+    for (uint32_t i = 0; i < 2; ++i) {
 	glBindFramebuffer(GL_FRAMEBUFFER, window->_blur_fbos[i]);
 	glBindTexture(GL_TEXTURE_2D, window->_blur_color_buffers[i]);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
@@ -107,23 +107,23 @@ int32_t create_context(window_t* window) {
 
     const char* rect_vert_start = &_binary_shaders_rect_vert_start;
     const char* rect_vert_end = &_binary_shaders_rect_vert_end;
-    const int rect_len = (int32_t) ((size_t) rect_vert_end - (size_t) rect_vert_start);
+    const int32_t rect_len = (int32_t) ((size_t) rect_vert_end - (size_t) rect_vert_start);
 
     const char* tex_vert_start = &_binary_shaders_tex_vert_start;
     const char* tex_vert_end = &_binary_shaders_tex_vert_end;
-    const int tex_len = (int32_t) ((size_t) tex_vert_end - (size_t) tex_vert_start);
+    const int32_t tex_len = (int32_t) ((size_t) tex_vert_end - (size_t) tex_vert_start);
 
     const char* trace_comp_start = &_binary_shaders_trace_comp_start;
     const char* trace_comp_end = &_binary_shaders_trace_comp_end;
-    const int trace_len = (int32_t) ((size_t) trace_comp_end - (size_t) trace_comp_start);
+    const int32_t trace_len = (int32_t) ((size_t) trace_comp_end - (size_t) trace_comp_start);
 
     const char* blur_frag_start = &_binary_shaders_blur_frag_start;
     const char* blur_frag_end = &_binary_shaders_blur_frag_end;
-    const int blur_len = (int32_t) ((size_t) blur_frag_end - (size_t) blur_frag_start);
+    const int32_t blur_len = (int32_t) ((size_t) blur_frag_end - (size_t) blur_frag_start);
 
     const char* bloom_frag_start = &_binary_shaders_bloom_frag_start;
     const char* bloom_frag_end = &_binary_shaders_bloom_frag_end;
-    const int bloom_len = (int32_t) ((size_t) bloom_frag_end - (size_t) bloom_frag_start);
+    const int32_t bloom_len = (int32_t) ((size_t) bloom_frag_end - (size_t) bloom_frag_start);
 
     GLuint rect_shader = create_shader(GL_VERTEX_SHADER, rect_vert_start, rect_len);
     PROPAGATE(rect_shader, ERROR, "Couldn't create rect shader.");
@@ -216,7 +216,7 @@ int32_t render_frame(window_t* window) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(window->_blur_shader);
     glActiveTexture(GL_TEXTURE0);
-    for (unsigned i = 0; i < BLUR_ITERS * 2; ++i) {
+    for (uint32_t i = 0; i < BLUR_ITERS * 2; ++i) {
 	glBindFramebuffer(GL_FRAMEBUFFER, window->_blur_fbos[i % 2]);
 	glUniform1f(window->_horizontal_uniform, (float) (i % 2));
 	glBindTexture(GL_TEXTURE_2D, i ? window->_blur_color_buffers[(i + 1) % 2] : window->_trace_color_buffers[1]);
