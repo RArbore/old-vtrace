@@ -13,8 +13,8 @@
     You should have received a copy of the GNU Lesser General Public License \
     along with vtrace. If not, see <https://www.gnu.org/licenses/>.
 
-CC=clang
-LD=clang
+CC=cc
+LD=cc
 OBJ=objcopy
 
 W_FLAGS=-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-declarations -Wmissing-include-dirs -Wredundant-decls -Wshadow -Wsign-conversion -Wswitch-default -Wundef -Werror -Wno-unused -Wconversion
