@@ -32,8 +32,8 @@
 	PROPAGATE_CLEANUP_END(ERROR);					\
     }
 
-int32_t create_context(window_t*);
+int32_t create_context(window_t* window);
 
-int32_t render_frame(window_t*);
+int32_t render_frame(window_t* window);
 
 #endif // RENDER_H_

@@ -49,10 +49,10 @@ typedef struct window_t {
     world_t _world;
 } window_t;
 
-int32_t create_window(window_t*);
+int32_t create_window(window_t* window);
 
-int32_t should_close(window_t*);
+int32_t should_close(window_t* window);
 
-void destroy_window(window_t*);
+void destroy_window(window_t* window);
 
 #endif // WINDOW_H_
