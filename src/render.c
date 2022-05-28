@@ -184,9 +184,9 @@ int32_t create_context(window_t* window) {
 
     glUseProgram(window->_bloom_shader);
     GLint image_uniform = glGetUniformLocation(window->_bloom_shader, "image");
-    PROPAGATE(image_uniform != -1, ERROR, "Couldn't find image uniform");
+    PROPAGATE(image_uniform != -1, ERROR, "Couldn't find image uniform.");
     GLint bloom_uniform = glGetUniformLocation(window->_bloom_shader, "bloom");
-    PROPAGATE(bloom_uniform != -1, ERROR, "Couldn't find bloom uniform");
+    PROPAGATE(bloom_uniform != -1, ERROR, "Couldn't find bloom uniform.");
     glUniform1i(image_uniform, 0);
     glUniform1i(bloom_uniform, 1);
 
