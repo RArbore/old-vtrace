@@ -17,7 +17,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#define CHUNK_WIDTH 8
+#define CHUNK_WIDTH 64
 #define CHUNK_SIZE (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH)
 
 typedef struct camera_t {
@@ -26,6 +26,27 @@ typedef struct camera_t {
 } camera_t;
 
 void init_camera(camera_t* camera);
+
+typedef struct child_desc_t {
+    uint32_t _child_pointer : 15;
+    uint32_t _far : 1;
+    uint32_t _valid_mask : 8;
+    uint32_t _leaf_mask : 8;
+} child_desc_t;
+
+typedef struct leaf_voxel_t {
+    uint8_t _red;
+    uint8_t _green;
+    uint8_t _blue;
+    uint8_t _flags;
+} leaf_voxel_t;
+
+typedef union svo_node_t {
+    child_desc_t _parent;
+    leaf_voxel_t _leaf;
+    uint32_t _far_pointer;
+    uint32_t _raw;
+} svo_node_t;
 
 typedef struct chunk_t {
     uint32_t* _chunk_data;
