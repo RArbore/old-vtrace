@@ -17,7 +17,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#define CHUNK_WIDTH 64
+#define CHUNK_WIDTH 8
 #define CHUNK_SIZE (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH)
 
 typedef struct camera_t {

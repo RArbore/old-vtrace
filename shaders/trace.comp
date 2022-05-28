@@ -16,12 +16,11 @@
 #define SQRT_2 1.4142135624
 #define CAM_DIST 250.0
 
-#define SKY_COLOR vec3(0.8, 0.8, 0.8)
+#define SKY_COLOR vec3(0.3, 0.3, 0.3)
 
-#define MAX_DIST 500
-#define MAX_ITER 500
+#define MAX_ITER 200
 
-#define CHUNK_WIDTH 64
+#define CHUNK_WIDTH 8
 #define CHUNK_SIZE (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH)
 
 #define REFLECT_PROB 0.7
@@ -30,7 +29,7 @@
 
 #define VOLUMETRIC_COEFF 0.01
 
-#define RAYS_PER_PIXEL 4
+#define RAYS_PER_PIXEL 2
 
 #define BLENDING 0.95
 
@@ -120,7 +119,7 @@ void main() {
 	float total_dist = init_total_dist;
 	float in_flight = init_in_flight;
 
-	while (iter < MAX_ITER && dot(vec3(map_pos) - camera_loc, vec3(map_pos) - camera_loc) < MAX_DIST * MAX_DIST) {
+	while (iter < MAX_ITER) {
 	    bvec3 mask = lessThanEqual(side_dist.xyz, min(side_dist.yzx, side_dist.zxy));
 	    
 	    side_dist += vec3(mask) * abs(delta_dist);
