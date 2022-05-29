@@ -37,7 +37,7 @@ static svo_node_type_t construct_svo_tree(svo_node_t* scratch_arena, uint32_t* n
 	uint32_t start = *num_alloc;
 	scratch_arena[target]._parent._child_pointer = (uint16_t) start;
 	*num_alloc += 8;
-	if (max_nodes <= *num_alloc) return SVO_ERROR;
+	PROPAGATE(max_nodes > *num_alloc, SVO_ERROR, "Number of allocated nodes exceeded the maximum number of nodes specified.");
 	uint32_t hw = w / 2;
 
 	PROPAGATE(codes[0] = construct_svo_tree(scratch_arena, num_alloc, start, max_nodes, voxels, hw, x, y, z) != SVO_ERROR, SVO_ERROR, "Couldn't create initial sub-SVO structure.");
@@ -65,21 +65,56 @@ static svo_node_type_t construct_svo_tree(svo_node_t* scratch_arena, uint32_t* n
 	    for (i = 0; i < 7; ++i) {
 		if (scratch_arena[start + i]._raw != scratch_arena[start + i + 1]._raw) break;
 	    }
-	    if (i == 7) scratch_arena[target]._raw = scratch_arena[start]._raw;
-	    return LEAF;
+	    if (i == 7) {
+		scratch_arena[target]._raw = scratch_arena[start]._raw;
+		return LEAF;
+	    }
 	}
 	return PARENT;
     }
 }
 
+typedef struct svo_queue_entry_t {
+    uint32_t _index;
+    svo_node_type_t _type;
+} svo_queue_entry_t;
+
 int32_t construct_svo(svo_node_t* dst, uint32_t max_nodes, uint32_t* voxels, uint32_t w) {
     svo_node_t* scratch_arena = malloc(SCRATCH_SPACE_MULTIPLIER * max_nodes * sizeof(svo_node_t));
     uint32_t num_alloc = 1;
 
-    PROPAGATE_CLEANUP_BEGIN(construct_svo_tree(scratch_arena, &num_alloc, 0, max_nodes, voxels, w, 0, 0, 0) != SVO_ERROR, "Couldn't create initial SVO structure.");
+    PROPAGATE_CLEANUP_BEGIN(construct_svo_tree(scratch_arena, &num_alloc, 0, SCRATCH_SPACE_MULTIPLIER * max_nodes, voxels, w, 0, 0, 0) != SVO_ERROR, "Couldn't create initial SVO structure.");
     free(scratch_arena);
     PROPAGATE_CLEANUP_END(ERROR);
 
+    svo_queue_entry_t* queue = malloc(max_nodes * sizeof(svo_queue_entry_t));
+    queue[0]._index = 0;
+    queue[0]._type = PARENT;
+    uint32_t queue_head = 0, queue_tail = 1;
+    while (queue_head < queue_tail) {
+	if (queue[queue_head]._type == PARENT) {
+	    dst[queue_head]._parent._child_pointer = (uint16_t) queue_tail;
+	    uint8_t invalid_mask = scratch_arena[queue[queue_head]._index]._parent._invalid_mask;
+	    uint8_t leaf_mask = scratch_arena[queue[queue_head]._index]._parent._leaf_mask;
+	    dst[queue_head]._parent._invalid_mask = invalid_mask;
+	    dst[queue_head]._parent._leaf_mask = leaf_mask;
+	    for (uint8_t i = 0; i < 8; ++i) {
+		if (invalid_mask & 0x80) {
+		    queue[queue_tail]._index = scratch_arena[queue[queue_head]._index]._parent._child_pointer + i;
+		    queue[queue_tail]._type = (leaf_mask << i) & 0x80 ? LEAF : PARENT;
+		    ++queue_tail;
+		}
+		invalid_mask <<= 1;
+	    }
+	}
+	else if (queue[queue_head]._type == LEAF) {
+	    dst[queue_head]._raw = scratch_arena[queue[queue_head]._index]._raw;
+	}
+	++queue_head;
+    }
+
+    free(scratch_arena);
+    free(queue);
     return SUCCESS;
 }
 
