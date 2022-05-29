@@ -17,50 +17,70 @@ void init_camera(camera_t* camera) {
     memset(&camera->_camera_rot, 0, 2 * sizeof(float));
 }
 
-typedef enum svo_type_t {
-    INVALID = 0,
-    LEAF = 1,
-    COMPOSITE = 2,
-} svo_type_t;
+static const uint32_t SCRATCH_SPACE_MULTIPLIER = 8;
 
-static int32_t construct_svo_internal(svo_node_t* dst, uint32_t max_nodes, uint32_t target, uint32_t* num_nodes, uint32_t* voxels, svo_type_t* created_type, uint32_t x, uint32_t y, uint32_t z, uint32_t w) {
-    PROPAGATE(target < max_nodes, ERROR, "Not enough space for new SVO node.");
+typedef enum svo_node_type_t {
+    PARENT = 0,
+    LEAF = 1,
+    INVALID = 2,
+    SVO_ERROR = 3,
+} svo_node_type_t;
+
+static svo_node_type_t construct_svo_tree(svo_node_t* scratch_arena, uint32_t* num_alloc, uint32_t target, uint32_t max_nodes, uint32_t* voxels, uint32_t w, uint32_t x, uint32_t y, uint32_t z) {
     if (w == 1) {
 	uint32_t voxel = voxels[x + w * (y + w * z)];
-	dst[target]._raw = voxel;
-	*created_type = voxel ? LEAF : INVALID;
+	scratch_arena[target]._raw = voxel;
+	return voxel ? LEAF : INVALID;
     }
     else {
-	svo_type_t children_types[8];
-	uint32_t prev_num_nodes = *num_nodes;
-	dst[target]._parent._child_pointer = (uint16_t) ++(*num_nodes);
-	*num_nodes += 8;
-	PROPAGATE(construct_svo_internal(dst, max_nodes, prev_num_nodes + 1, num_nodes, voxels, &children_types[0], x, y, z, w / 2) == SUCCESS, ERROR, "Couldn't construct SVO node.");
-	PROPAGATE(construct_svo_internal(dst, max_nodes, prev_num_nodes + 2, num_nodes, voxels, &children_types[1], x + w / 2, y, z, w / 2) == SUCCESS, ERROR, "Couldn't construct SVO node.");
-	PROPAGATE(construct_svo_internal(dst, max_nodes, prev_num_nodes + 3, num_nodes, voxels, &children_types[2], x, y + w / 2, z, w / 2) == SUCCESS, ERROR, "Couldn't construct SVO node.");
-	PROPAGATE(construct_svo_internal(dst, max_nodes, prev_num_nodes + 4, num_nodes, voxels, &children_types[3], x + w / 2, y + w / 2, z, w / 2) == SUCCESS, ERROR, "Couldn't construct SVO node.");
-	PROPAGATE(construct_svo_internal(dst, max_nodes, prev_num_nodes + 5, num_nodes, voxels, &children_types[4], x, y, z + w / 2, w / 2) == SUCCESS, ERROR, "Couldn't construct SVO node.");
-	PROPAGATE(construct_svo_internal(dst, max_nodes, prev_num_nodes + 6, num_nodes, voxels, &children_types[5], x + w / 2, y, z + w / 2, w / 2) == SUCCESS, ERROR, "Couldn't construct SVO node.");
-	PROPAGATE(construct_svo_internal(dst, max_nodes, prev_num_nodes + 7, num_nodes, voxels, &children_types[6], x, y + w / 2, z + w / 2, w / 2) == SUCCESS, ERROR, "Couldn't construct SVO node.");
-	PROPAGATE(construct_svo_internal(dst, max_nodes, prev_num_nodes + 8, num_nodes, voxels, &children_types[7], x + w / 2, y + w / 2, z + w / 2, w / 2) == SUCCESS, ERROR, "Couldn't construct SVO node.");
+	svo_node_type_t codes[8];
+	uint32_t start = *num_alloc;
+	scratch_arena[target]._parent._child_pointer = (uint16_t) start;
+	*num_alloc += 8;
+	if (max_nodes <= *num_alloc) return SVO_ERROR;
+	uint32_t hw = w / 2;
 
-	int8_t all_invalid = 1;
+	PROPAGATE(codes[0] = construct_svo_tree(scratch_arena, num_alloc, start, max_nodes, voxels, hw, x, y, z) != SVO_ERROR, SVO_ERROR, "Couldn't create initial sub-SVO structure.");
+	PROPAGATE(codes[1] = construct_svo_tree(scratch_arena, num_alloc, start + 1, max_nodes, voxels, hw, x + hw, y, z) != SVO_ERROR, SVO_ERROR, "Couldn't create initial sub-SVO structure.");
+	PROPAGATE(codes[2] = construct_svo_tree(scratch_arena, num_alloc, start + 2, max_nodes, voxels, hw, x, y + hw, z) != SVO_ERROR, SVO_ERROR, "Couldn't create initial sub-SVO structure.");
+	PROPAGATE(codes[3] = construct_svo_tree(scratch_arena, num_alloc, start + 3, max_nodes, voxels, hw, x + hw, y + hw, z) != SVO_ERROR, SVO_ERROR, "Couldn't create initial sub-SVO structure.");
+	PROPAGATE(codes[4] = construct_svo_tree(scratch_arena, num_alloc, start + 4, max_nodes, voxels, hw, x, y, z + hw) != SVO_ERROR, SVO_ERROR, "Couldn't create initial sub-SVO structure.");
+	PROPAGATE(codes[5] = construct_svo_tree(scratch_arena, num_alloc, start + 5, max_nodes, voxels, hw, x + hw, y, z + hw) != SVO_ERROR, SVO_ERROR, "Couldn't create initial sub-SVO structure.");
+	PROPAGATE(codes[6] = construct_svo_tree(scratch_arena, num_alloc, start + 6, max_nodes, voxels, hw, x, y + hw, z + hw) != SVO_ERROR, SVO_ERROR, "Couldn't create initial sub-SVO structure.");
+	PROPAGATE(codes[7] = construct_svo_tree(scratch_arena, num_alloc, start + 7, max_nodes, voxels, hw, x + hw, y + hw, z + hw) != SVO_ERROR, SVO_ERROR, "Couldn't create initial sub-SVO structure.");
+
 	for (int8_t i = 0; i < 8; ++i) {
-	    dst[target]._parent._invalid_mask >>= 1;
-	    dst[target]._parent._invalid_mask |= 0x80 * children_types[i] == INVALID;
-	    dst[target]._parent._leaf_mask >>= 1;
-	    dst[target]._parent._leaf_mask |= 0x80 * children_types[i] == LEAF;
+	    scratch_arena[target]._parent._invalid_mask >>= 1;
+	    scratch_arena[target]._parent._invalid_mask |= 0x80 * codes[i] == INVALID;
+	    scratch_arena[target]._parent._leaf_mask >>= 1;
+	    scratch_arena[target]._parent._leaf_mask |= 0x80 * codes[i] == LEAF;
 	}
-	*created_type = all_invalid ? INVALID : COMPOSITE;
-
-	if (dst[target]._parent._invalid_mask == 0xFF) dst[target]._raw = 0;
+	
+	if (scratch_arena[target]._parent._invalid_mask == 0xFF) {
+	    scratch_arena[target]._raw = 0;
+	    return INVALID;
+	}
+	if (scratch_arena[target]._parent._leaf_mask == 0xFF) {
+	    uint8_t i;
+	    for (i = 0; i < 7; ++i) {
+		if (scratch_arena[start + i]._raw != scratch_arena[start + i + 1]._raw) break;
+	    }
+	    if (i == 7) scratch_arena[target]._raw = scratch_arena[start]._raw;
+	    return LEAF;
+	}
+	return PARENT;
     }
-    return SUCCESS;
 }
 
 int32_t construct_svo(svo_node_t* dst, uint32_t max_nodes, uint32_t* voxels, uint32_t w) {
-    uint32_t num_nodes = 0;
-    return construct_svo_internal(dst, max_nodes, 0, &num_nodes, voxels, NULL, 0, 0, 0, w);
+    svo_node_t* scratch_arena = malloc(SCRATCH_SPACE_MULTIPLIER * max_nodes * sizeof(svo_node_t));
+    uint32_t num_alloc = 1;
+
+    PROPAGATE_CLEANUP_BEGIN(construct_svo_tree(scratch_arena, &num_alloc, 0, max_nodes, voxels, w, 0, 0, 0) != SVO_ERROR, "Couldn't create initial SVO structure.");
+    free(scratch_arena);
+    PROPAGATE_CLEANUP_END(ERROR);
+
+    return SUCCESS;
 }
 
 void init_chunk(chunk_t* chunk) {
