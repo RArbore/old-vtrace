@@ -10,6 +10,9 @@
     You should have received a copy of the GNU General Public License
     along with vtrace. If not, see <https://www.gnu.org/licenses/>.  */
 
+#ifndef CONTROL_H_
+#define CONTROL_H_
+
 #include <math.h>
 
 #include <GLFW/glfw3.h>
@@ -17,3 +20,5 @@
 #include "window.h"
 
 void handle_control(window_t* window, float dt);
+
+#endif // CONTROL_H_
