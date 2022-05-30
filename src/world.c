@@ -50,7 +50,42 @@ static void morton_decode(uint64_t morton, uint32_t* x, uint32_t* y, uint32_t* z
     *z = compact_by_3(morton >> 2);
 }
 
-int32_t construct_svo(svo_node_t* dst, uint32_t max_nodes, uint32_t* voxels, uint32_t w) {
+static uint32_t morton_read(uint32_t* voxels, uint64_t morton, uint32_t w) {
+    uint32_t x, y, z;
+    morton_decode(morton, &x, &y, &z);
+    return voxels[x + w * (y + w * z)];
+}
+
+int32_t construct_svo(svo_node_t* dst, uint32_t max_nodes, uint32_t* voxels, uint32_t w, uint32_t* num_nodes) {
+    svo_node_t buffer[MAX_OCTREE_DEPTH][8];
+    uint32_t buffer_size[MAX_OCTREE_DEPTH] = {0};
+    uint32_t num_written = 0, num_read = 0;
+
+    while (num_read < w * w * w) {
+	for (uint8_t d = 0; d < MAX_OCTREE_DEPTH - 1; ++d) {
+	    uint8_t valid = 0;
+	    for (uint8_t i = 0; i < 8; ++i) {
+		valid <<= 1;
+		buffer[d][i]._raw = morton_read(voxels, num_read + i, w);
+		valid |= 0x01u * (voxels[i] != 0);
+	    }
+	    num_read += 8;
+	    if (valid) {
+		for (uint8_t i = 0; i < 8; ++i) {
+		    PROPAGATE(num_written < max_nodes, ERROR, "Exceeded maximum number of SVO nodes.");
+		    if (buffer[d][i]._raw) dst[num_written++] = buffer[d][i];
+		}
+	    }
+	    buffer_size[d] = 0;
+	    buffer[d + 1][buffer_size[d + 1]]._parent._valid_mask = valid;
+	    buffer[d + 1][buffer_size[d + 1]]._parent._leaf_mask = (uint8_t) (valid * (d == 0));
+	    ++buffer_size[d + 1];
+	    if (buffer_size[d + 1] < 8) break;
+	}
+    }
+
+    *num_nodes = num_written;
+   
     return SUCCESS;
 }
 
@@ -64,6 +99,10 @@ void init_chunk(chunk_t* chunk) {
 	if (rand() % 10 > 3)
 	    chunk->_chunk_data[i] = 0;
     }
+    svo_node_t* svo = malloc(CHUNK_SIZE * 2 * sizeof(svo_node_t));
+    uint32_t num_nodes;
+    construct_svo(svo, CHUNK_SIZE * 2, chunk->_chunk_data, CHUNK_WIDTH, &num_nodes);
+    printf("%u\n", num_nodes);
 }
 
 void destroy_chunk(chunk_t* chunk) {

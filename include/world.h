@@ -22,6 +22,8 @@
 #define CHUNK_WIDTH 64
 #define CHUNK_SIZE (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH)
 
+#define MAX_OCTREE_DEPTH 20
+
 typedef struct camera_t {
     float _camera_loc[3];
     float _camera_rot[2];
@@ -30,8 +32,7 @@ typedef struct camera_t {
 void init_camera(camera_t* camera);
 
 typedef struct child_desc_t {
-    uint16_t _child_pointer;
-    uint8_t _invalid_mask;
+    uint8_t _valid_mask;
     uint8_t _leaf_mask;
 } child_desc_t;
 
@@ -48,7 +49,7 @@ typedef union svo_node_t {
     uint32_t _raw;
 } svo_node_t;
 
-int32_t construct_svo(svo_node_t* dst, uint32_t max_nodes, uint32_t* voxels, uint32_t w);
+int32_t construct_svo(svo_node_t* dst, uint32_t max_nodes, uint32_t* voxels, uint32_t w, uint32_t* num_nodes);
 
 typedef struct chunk_t {
     uint32_t* _chunk_data;
