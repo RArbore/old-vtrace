@@ -61,29 +61,43 @@ int32_t construct_svo(svo_node_t* dst, uint32_t max_nodes, uint32_t* voxels, uin
     uint32_t buffer_size[MAX_OCTREE_DEPTH] = {0};
     uint32_t num_written = 0, num_read = 0;
 
+    uint8_t last_node_level = 0;
     while (num_read < w * w * w) {
-	for (uint8_t d = 0; d < MAX_OCTREE_DEPTH - 1; ++d) {
-	    uint8_t valid = 0;
-	    for (uint8_t i = 0; i < 8; ++i) {
-		valid <<= 1;
-		buffer[d][i]._raw = morton_read(voxels, num_read + i, w);
-		valid |= 0x01u * (voxels[i] != 0);
-	    }
-	    num_read += 8;
+	uint8_t valid = 0;
+	for (uint8_t i = 0; i < 8; ++i) {
+	    valid <<= 1;
+	    uint32_t voxel = morton_read(voxels, num_read + i, w);
+	    buffer[0][i]._raw = voxel;
+	    if (voxel) valid |= 0x01;
+	}
+	num_read += 8;
+	buffer_size[0] = 8;
+	for (uint8_t d = 0; d < MAX_OCTREE_DEPTH - 1 && buffer_size[d] >= 8; ++d) {
 	    if (valid) {
+		valid = 0;
 		for (uint8_t i = 0; i < 8; ++i) {
 		    PROPAGATE(num_written < max_nodes, ERROR, "Exceeded maximum number of SVO nodes.");
-		    if (buffer[d][i]._raw) dst[num_written++] = buffer[d][i];
+		    valid <<= 1;
+		    if (buffer[d][i]._raw) {
+			dst[num_written++] = buffer[d][i];
+			valid |= 0x01u;
+		    }
 		}
 	    }
 	    buffer_size[d] = 0;
-	    buffer[d + 1][buffer_size[d + 1]]._parent._valid_mask = valid;
-	    buffer[d + 1][buffer_size[d + 1]]._parent._leaf_mask = (uint8_t) (valid * (d == 0));
+	    if (valid) {
+		buffer[d + 1][buffer_size[d + 1]]._parent._valid_mask = valid;
+		buffer[d + 1][buffer_size[d + 1]]._parent._leaf_mask = d == 0 ? valid : 0;
+	    }
+	    else {
+		buffer[d + 1][buffer_size[d + 1]]._raw = 0;
+	    }
 	    ++buffer_size[d + 1];
-	    if (buffer_size[d + 1] < 8) break;
+	    last_node_level = d + 1;
 	}
     }
-
+    PROPAGATE(buffer_size[last_node_level] == 1, ERROR, "No single root node constructed for SVO.");
+    dst[num_written++] = buffer[last_node_level][0];
     *num_nodes = num_written;
    
     return SUCCESS;
@@ -96,13 +110,12 @@ void init_chunk(chunk_t* chunk) {
 	chunk->_chunk_data[i] = (uint32_t) rand();
 	if (rand() % 10 > 1)
 	    chunk->_chunk_data[i] &= 0xFFFFFFFD;
-	if (rand() % 10 > 3)
+	if (rand() % 10 > 2)
 	    chunk->_chunk_data[i] = 0;
     }
     svo_node_t* svo = malloc(CHUNK_SIZE * 2 * sizeof(svo_node_t));
     uint32_t num_nodes;
     construct_svo(svo, CHUNK_SIZE * 2, chunk->_chunk_data, CHUNK_WIDTH, &num_nodes);
-    printf("%u\n", num_nodes);
 }
 
 void destroy_chunk(chunk_t* chunk) {

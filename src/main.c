@@ -45,7 +45,7 @@ int32_t main(void) {
     while (!should_close(&window)) {
 	float raw_dt = get_frame_time();
 	float dt = raw_dt / (float) 1e9;
-	printf("%f\n", (float) 1e9 / raw_dt);
+	//printf("%f\n", (float) 1e9 / raw_dt);
 	glfwPollEvents();
 
 	PROPAGATE_CLEANUP_BEGIN(render_frame(&window) == SUCCESS, "Failed to render frame.");
