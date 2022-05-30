@@ -32,6 +32,7 @@ typedef struct camera_t {
 void init_camera(camera_t* camera);
 
 typedef struct child_desc_t {
+    uint16_t _children;
     uint8_t _valid_mask;
     uint8_t _leaf_mask;
 } child_desc_t;

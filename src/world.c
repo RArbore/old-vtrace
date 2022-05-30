@@ -73,6 +73,7 @@ int32_t construct_svo(svo_node_t* dst, uint32_t max_nodes, uint32_t* voxels, uin
 	num_read += 8;
 	buffer_size[0] = 8;
 	for (uint8_t d = 0; d < MAX_OCTREE_DEPTH - 1 && buffer_size[d] >= 8; ++d) {
+	    uint32_t prev_num_written = num_written;
 	    if (valid) {
 		valid = 0;
 		for (uint8_t i = 0; i < 8; ++i) {
@@ -86,6 +87,7 @@ int32_t construct_svo(svo_node_t* dst, uint32_t max_nodes, uint32_t* voxels, uin
 	    }
 	    buffer_size[d] = 0;
 	    if (valid) {
+		buffer[d + 1][buffer_size[d + 1]]._parent._children = (uint16_t) prev_num_written;
 		buffer[d + 1][buffer_size[d + 1]]._parent._valid_mask = valid;
 		buffer[d + 1][buffer_size[d + 1]]._parent._leaf_mask = d == 0 ? valid : 0;
 	    }
@@ -103,19 +105,53 @@ int32_t construct_svo(svo_node_t* dst, uint32_t max_nodes, uint32_t* voxels, uin
     return SUCCESS;
 }
 
+static uint32_t query_svo_helper(svo_node_t* svo, uint32_t x, uint32_t y, uint32_t z, uint32_t w, uint32_t pos, uint8_t leaf) {
+    if (leaf) return svo[pos]._raw; 
+
+    uint8_t bx = x < w / 2;
+    uint8_t by = y < w / 2;
+    uint8_t bz = z < w / 2;
+    uint32_t rx = bx ? x : x - w / 2;
+    uint32_t ry = by ? y : y - w / 2;
+    uint32_t rz = bz ? z : z - w / 2;
+    uint8_t bit = (uint8_t) (7 - (bx | (by << 1) | (bz << 2)));
+    uint8_t mask = 0x80 >> bit;
+    
+    if (svo[pos]._parent._valid_mask & mask) {
+	mask = svo[pos]._parent._valid_mask;
+	uint8_t count = 0;
+	for (uint8_t i = 0; i < bit; ++i) {
+	    count += (mask >> (7 - i)) & 1;
+	}
+	uint32_t child = svo[pos]._parent._children + count;
+	return query_svo_helper(svo, rx, ry, rz, w / 2, child, svo[pos]._parent._leaf_mask & mask);
+    }
+    return 0;
+}
+
+static uint32_t query_svo(svo_node_t* svo, uint32_t num_nodes, uint32_t x, uint32_t y, uint32_t z, uint32_t w) {
+    return query_svo_helper(svo, x, y, z, w, num_nodes - 1, 0);
+}
+
+
 void init_chunk(chunk_t* chunk) {
     chunk->_chunk_data = malloc(CHUNK_SIZE * sizeof(uint32_t));
     memset(chunk->_chunk_data, 0, CHUNK_SIZE * sizeof(uint32_t));
-    for (size_t i = 0; i < CHUNK_SIZE; ++i) {
+    for (uint32_t i = 0; i < CHUNK_SIZE; ++i) {
 	chunk->_chunk_data[i] = (uint32_t) rand();
 	if (rand() % 10 > 1)
 	    chunk->_chunk_data[i] &= 0xFFFFFFFD;
 	if (rand() % 10 > 2)
 	    chunk->_chunk_data[i] = 0;
     }
-    svo_node_t* svo = malloc(CHUNK_SIZE * 2 * sizeof(svo_node_t));
+    svo_node_t* svo = calloc(CHUNK_SIZE * 2, sizeof(svo_node_t));
     uint32_t num_nodes;
     construct_svo(svo, CHUNK_SIZE * 2, chunk->_chunk_data, CHUNK_WIDTH, &num_nodes);
+
+    for (uint32_t i = 0; i < CHUNK_SIZE; ++i) {
+	uint32_t queried = query_svo(svo, num_nodes, i % CHUNK_WIDTH, (i / CHUNK_WIDTH) % CHUNK_WIDTH, (i / (CHUNK_WIDTH * CHUNK_WIDTH)) % CHUNK_WIDTH, CHUNK_WIDTH);
+	printf("%x %x\n", chunk->_chunk_data[i], queried);
+    }
 }
 
 void destroy_chunk(chunk_t* chunk) {
