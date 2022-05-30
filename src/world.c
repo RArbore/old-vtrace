@@ -74,15 +74,13 @@ int32_t construct_svo(svo_node_t* dst, uint32_t max_nodes, uint32_t* voxels, uin
 	buffer_size[0] = 8;
 	for (uint8_t d = 0; d < MAX_OCTREE_DEPTH - 1 && buffer_size[d] >= 8; ++d) {
 	    uint32_t prev_num_written = num_written;
-	    if (valid) {
-		valid = 0;
-		for (uint8_t i = 0; i < 8; ++i) {
-		    PROPAGATE(num_written < max_nodes, ERROR, "Exceeded maximum number of SVO nodes.");
-		    valid <<= 1;
-		    if (buffer[d][i]._raw) {
-			dst[num_written++] = buffer[d][i];
-			valid |= 0x01u;
-		    }
+	    valid = 0;
+	    for (uint8_t i = 0; i < 8; ++i) {
+		PROPAGATE(num_written < max_nodes, ERROR, "Exceeded maximum number of SVO nodes.");
+		valid <<= 1;
+		if (buffer[d][i]._raw) {
+		    dst[num_written++] = buffer[d][i];
+		    valid |= 0x01u;
 		}
 	    }
 	    buffer_size[d] = 0;
@@ -116,7 +114,7 @@ static uint32_t query_svo_helper(svo_node_t* svo, uint32_t x, uint32_t y, uint32
     uint32_t rz = bz ? z : z - w / 2;
     uint8_t bit = (uint8_t) (7 - (bx | (by << 1) | (bz << 2)));
     uint8_t mask = 0x80 >> bit;
-    
+
     if (svo[pos]._parent._valid_mask & mask) {
 	mask = svo[pos]._parent._valid_mask;
 	uint8_t count = 0;
@@ -148,10 +146,15 @@ void init_chunk(chunk_t* chunk) {
     uint32_t num_nodes;
     construct_svo(svo, CHUNK_SIZE * 2, chunk->_chunk_data, CHUNK_WIDTH, &num_nodes);
 
+    uint32_t bad_count = 0;
     for (uint32_t i = 0; i < CHUNK_SIZE; ++i) {
 	uint32_t queried = query_svo(svo, num_nodes, i % CHUNK_WIDTH, (i / CHUNK_WIDTH) % CHUNK_WIDTH, (i / (CHUNK_WIDTH * CHUNK_WIDTH)) % CHUNK_WIDTH, CHUNK_WIDTH);
-	printf("%x %x\n", chunk->_chunk_data[i], queried);
+	if (queried != chunk->_chunk_data[i])
+	    printf("%x %x %u %u %u %lu\n", chunk->_chunk_data[i], queried, i % CHUNK_WIDTH, (i / CHUNK_WIDTH) % CHUNK_WIDTH, (i / (CHUNK_WIDTH * CHUNK_WIDTH)) % CHUNK_WIDTH, morton_encode(i % CHUNK_WIDTH, (i / CHUNK_WIDTH) % CHUNK_WIDTH, (i / (CHUNK_WIDTH * CHUNK_WIDTH)) % CHUNK_WIDTH));
+	bad_count += chunk->_chunk_data[i] != queried;
     }
+    printf("%u\n", num_nodes);
+    printf("%u\n", bad_count);
 }
 
 void destroy_chunk(chunk_t* chunk) {

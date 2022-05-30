@@ -19,7 +19,7 @@
 
 #include "error.h"
 
-#define CHUNK_WIDTH 4
+#define CHUNK_WIDTH 32
 #define CHUNK_SIZE (CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_WIDTH)
 
 #define MAX_OCTREE_DEPTH 20
