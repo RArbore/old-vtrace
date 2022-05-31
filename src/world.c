@@ -131,14 +131,21 @@ static uint32_t query_svo(svo_node_t* svo, uint32_t num_nodes, uint32_t x, uint3
     return query_svo_helper(svo, x, y, z, w, num_nodes - 1, 0);
 }
 
+static int32_t max(int32_t a, int32_t b) {
+    return a > b ? a : b;
+}
 
 void init_chunk(chunk_t* chunk) {
     chunk->_chunk_data = malloc(CHUNK_SIZE * sizeof(uint32_t));
     memset(chunk->_chunk_data, 0, CHUNK_SIZE * sizeof(uint32_t));
     for (uint32_t i = 0; i < CHUNK_SIZE; ++i) {
-	chunk->_chunk_data[i] = (uint32_t) rand();
+	int32_t h =  rand() % (255 * 3);
+	int32_t r = max(255 - abs(h), 0) + max(255 - abs(h - 255 * 3), 0);
+	int32_t g = max(255 - abs(h - 255), 0);
+	int32_t b = max(255 - abs(h - 255 * 2), 0);
+	chunk->_chunk_data[i] = (uint32_t) ((r << 24) | (g << 16) | (b << 8) | (uint8_t) rand());
 	if (rand() % 10 > 1)
-	    chunk->_chunk_data[i] &= 0xFFFFFFFD;
+	    chunk->_chunk_data[i] &= 0xFFFFFFFE;
 	if (rand() % 10 > 2)
 	    chunk->_chunk_data[i] = 0;
     }
