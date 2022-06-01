@@ -39,7 +39,8 @@ layout(binding = 1, rgba8) writeonly uniform image2D bright_color;
 layout(binding = 2, rgba8) uniform image2D prev_frag_color;
 layout(binding = 3, rgba8) uniform image2D prev_bright_color;
 layout(binding = 4) buffer chunk {
-    uint _chunk_data[];
+    uint _num_nodes;
+    uint _svo[];
 };
 
 uniform vec3 camera_loc;
@@ -59,18 +60,7 @@ uint hash(uint x) {
 
 float randf(uint x) {
     uint h = hash(x);
-    return float(h & 0x00FFFFFF) / float(0x00FFFFFF);
-}
-
-uint get_voxel(ivec3 pos) {
-    if (bool(int(pos.x < 0) |
-	     int(pos.y < 0) |
-	     int(pos.z < 0) |
-	     int(pos.x >= CHUNK_WIDTH) |
-	     int(pos.y >= CHUNK_WIDTH) |
-	     int(pos.z >= CHUNK_WIDTH))) return 0;
-    const int index = pos.x + pos.y * CHUNK_WIDTH + pos.z * CHUNK_WIDTH * CHUNK_WIDTH;
-    return _chunk_data[index];
+    return float(h & uint(0x00FFFFFF)) / float(0x00FFFFFF);
 }
 
 mat3 rotation_mat(vec3 axis, float angle) {
@@ -82,6 +72,56 @@ mat3 rotation_mat(vec3 axis, float angle) {
     return mat3(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,
                 oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,
                 oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c);
+}
+
+uint query_svo_helper(uint x, uint y, uint z, uint w, uint pos, bool leaf) {
+    while (true) {
+	if (leaf) return _svo[pos]; 
+	
+	bool bx = x < w / 2;
+	bool by = y < w / 2;
+	bool bz = z < w / 2;
+	uint rx = bx ? x : x - w / 2;
+	uint ry = by ? y : y - w / 2;
+	uint rz = bz ? z : z - w / 2;
+	uint bit = uint(7 - (uint(bx) | (uint(by) << 1) | (uint(bz) << 2)));
+	uint mask = 0x80 >> bit;
+	
+	uint valid_mask = (_svo[pos] & uint(0x00FF0000)) >> 16;
+	uint leaf_mask = (_svo[pos] & uint(0xFF000000)) >> 24;
+	if ((valid_mask & mask) != 0) {
+	    mask = valid_mask;
+	    uint count = 0;
+	    for (uint i = 0; i < bit; ++i) {
+		count += (mask >> (7 - i)) & 1;
+	    }  
+	    uint child = (_svo[pos] & uint(0x0000FFFF)) + count;
+	    x = rx;
+	    y = ry;
+	    z = rz;
+	    w /= 2;
+	    pos = child;
+	    leaf = (leaf_mask & mask) != 0;
+	}
+	else {
+	    break;
+	}
+    }
+    return 0;
+}
+
+uint query_svo(uint x, uint y, uint z, uint w) {
+    return query_svo_helper(x, y, z, w, _num_nodes - 1, false);
+}
+
+uint get_voxel(ivec3 pos) {
+    if (bool(int(pos.x < 0) |
+	     int(pos.y < 0) |
+	     int(pos.z < 0) |
+	     int(pos.x >= CHUNK_WIDTH) |
+	     int(pos.y >= CHUNK_WIDTH) |
+	     int(pos.z >= CHUNK_WIDTH))) return 0;
+    return query_svo(pos.x, pos.y, pos.z, CHUNK_WIDTH);
 }
 
 void main() {

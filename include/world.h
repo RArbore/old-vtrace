@@ -53,7 +53,8 @@ typedef union svo_node_t {
 int32_t construct_svo(svo_node_t* dst, uint32_t max_nodes, uint32_t* voxels, uint32_t w, uint32_t* num_nodes);
 
 typedef struct chunk_t {
-    uint32_t* _chunk_data;
+    svo_node_t* _svo;
+    uint32_t _num_nodes;
 } chunk_t;
 
 void init_chunk(chunk_t* chunk);

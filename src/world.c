@@ -136,36 +136,30 @@ static int32_t max(int32_t a, int32_t b) {
 }
 
 void init_chunk(chunk_t* chunk) {
-    chunk->_chunk_data = malloc(CHUNK_SIZE * sizeof(uint32_t));
-    memset(chunk->_chunk_data, 0, CHUNK_SIZE * sizeof(uint32_t));
+    uint32_t* chunk_raw = malloc(CHUNK_SIZE * sizeof(uint32_t));
+    memset(chunk_raw, 0, CHUNK_SIZE * sizeof(uint32_t));
     for (uint32_t i = 0; i < CHUNK_SIZE; ++i) {
 	int32_t h =  rand() % (255 * 3);
 	int32_t r = max(255 - abs(h), 0) + max(255 - abs(h - 255 * 3), 0);
 	int32_t g = max(255 - abs(h - 255), 0);
 	int32_t b = max(255 - abs(h - 255 * 2), 0);
-	chunk->_chunk_data[i] = (uint32_t) ((r << 24) | (g << 16) | (b << 8) | (uint8_t) rand());
+	chunk_raw[i] = (uint32_t) ((r << 24) | (g << 16) | (b << 8) | (uint8_t) rand());
 	if (rand() % 10 > 1)
-	    chunk->_chunk_data[i] &= 0xFFFFFFFE;
+	    chunk_raw[i] &= 0xFFFFFFFE;
 	if (rand() % 10 > 2)
-	    chunk->_chunk_data[i] = 0;
+	    chunk_raw[i] = 0;
     }
     svo_node_t* svo = calloc(CHUNK_SIZE * 2, sizeof(svo_node_t));
     uint32_t num_nodes;
-    construct_svo(svo, CHUNK_SIZE * 2, chunk->_chunk_data, CHUNK_WIDTH, &num_nodes);
+    construct_svo(svo, CHUNK_SIZE * 2, chunk_raw, CHUNK_WIDTH, &num_nodes);
 
-    uint32_t bad_count = 0;
-    for (uint32_t i = 0; i < CHUNK_SIZE; ++i) {
-	uint32_t queried = query_svo(svo, num_nodes, i % CHUNK_WIDTH, (i / CHUNK_WIDTH) % CHUNK_WIDTH, (i / (CHUNK_WIDTH * CHUNK_WIDTH)) % CHUNK_WIDTH, CHUNK_WIDTH);
-	if (queried != chunk->_chunk_data[i])
-	    printf("%x %x %u %u %u %lu\n", chunk->_chunk_data[i], queried, i % CHUNK_WIDTH, (i / CHUNK_WIDTH) % CHUNK_WIDTH, (i / (CHUNK_WIDTH * CHUNK_WIDTH)) % CHUNK_WIDTH, morton_encode(i % CHUNK_WIDTH, (i / CHUNK_WIDTH) % CHUNK_WIDTH, (i / (CHUNK_WIDTH * CHUNK_WIDTH)) % CHUNK_WIDTH));
-	bad_count += chunk->_chunk_data[i] != queried;
-    }
-    printf("%u\n", num_nodes);
-    printf("%u\n", bad_count);
+    free(chunk_raw);
+    chunk->_svo = svo;
+    chunk->_num_nodes = num_nodes;
 }
 
 void destroy_chunk(chunk_t* chunk) {
-    free(chunk->_chunk_data);
+    free(chunk->_svo);
 }
 
 void init_world(world_t* world) {
