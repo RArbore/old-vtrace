@@ -94,7 +94,7 @@ uint query_svo_helper(uint x, uint y, uint z, uint w, out uint fw, uint pos, boo
 	    uint count = 0;
 	    for (uint i = 0; i < bit; ++i) {
 		count += (mask >> (7 - i)) & 1u;
-	    }  
+	    }
 	    uint child = (_svo[pos] & 0x0000FFFFu) + count;
 	    x = rx;
 	    y = ry;
@@ -122,7 +122,10 @@ uint get_voxel(ivec3 pos, out uint fw) {
 	     int(pos.z < 0) |
 	     int(pos.x >= CHUNK_WIDTH) |
 	     int(pos.y >= CHUNK_WIDTH) |
-	     int(pos.z >= CHUNK_WIDTH))) return 0;
+	     int(pos.z >= CHUNK_WIDTH))) {
+	fw = 0;
+	return 0;
+    }
     return query_svo(pos.x, pos.y, pos.z, CHUNK_WIDTH, fw);
 }
 
