@@ -97,6 +97,7 @@ int32_t construct_svo(svo_node_t* dst, uint32_t max_nodes, uint32_t* voxels, uin
 	}
     }
     PROPAGATE(buffer_size[last_node_level] == 1, ERROR, "No single root node constructed for SVO.");
+    PROPAGATE(num_written < max_nodes, ERROR, "Exceeded maximum number of SVO nodes.");
     dst[num_written++] = buffer[last_node_level][0];
     *num_nodes = num_written;
    
@@ -146,12 +147,16 @@ void init_chunk(chunk_t* chunk) {
 	chunk_raw[i] = (uint32_t) ((r << 24) | (g << 16) | (b << 8) | (uint8_t) rand());
 	if (rand() % 10 > 1)
 	    chunk_raw[i] &= 0xFFFFFFFE;
-	if (rand() % 10 > 2)
+	int32_t x = (int32_t) i % CHUNK_SIZE;
+	int32_t y = (int32_t) i / CHUNK_SIZE % CHUNK_SIZE;
+	int32_t z = (int32_t) i / CHUNK_SIZE / CHUNK_SIZE;
+	if (x % 2 == 0 || y % 2 == 0 || z % 2 == 0)
 	    chunk_raw[i] = 0;
     }
     svo_node_t* svo = calloc(CHUNK_SIZE * 2, sizeof(svo_node_t));
     uint32_t num_nodes;
     construct_svo(svo, CHUNK_SIZE * 2, chunk_raw, CHUNK_WIDTH, &num_nodes);
+    printf("%u\n", num_nodes);
 
     free(chunk_raw);
     chunk->_svo = svo;
