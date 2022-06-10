@@ -156,7 +156,20 @@ void init_chunk(chunk_t* chunk) {
     svo_node_t* svo = calloc(CHUNK_SIZE * 2, sizeof(svo_node_t));
     uint32_t num_nodes;
     construct_svo(svo, CHUNK_SIZE * 2, chunk_raw, CHUNK_WIDTH, &num_nodes);
-    printf("%u\n", num_nodes);
+    printf("Num nodes: %u\n", num_nodes);
+    uint32_t bad_count = 0;
+    for (uint32_t i = 0; i < CHUNK_SIZE; ++i) {
+	uint32_t x = i % CHUNK_WIDTH;
+	uint32_t y = i / CHUNK_WIDTH % CHUNK_WIDTH;
+	uint32_t z = i / CHUNK_WIDTH / CHUNK_WIDTH;
+	uint32_t queried_voxel = query_svo(svo, num_nodes, x, y, z, CHUNK_WIDTH);
+	uint32_t actual_voxel = chunk_raw[i];
+	if (queried_voxel != actual_voxel) {
+	    printf("%u %u\n", queried_voxel, actual_voxel);
+	    ++bad_count;
+	}
+    }
+    printf("Bad voxels: %u\n", bad_count);
 
     free(chunk_raw);
     chunk->_svo = svo;
