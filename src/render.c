@@ -177,7 +177,9 @@ int32_t create_context(window_t* window) {
     PROPAGATE(window->_camera_rot_uniform != -1, ERROR, "Couldn't find camera_rot uniform.");
 
     window->_rand_uniform = glGetUniformLocation(window->_trace_shader, "rand");
-    PROPAGATE(window->_rand_uniform != -1, ERROR, "Couldn't find rand uniform.");
+    if (window->_rand_uniform == -1) {
+	fprintf(stderr, "WARNING: Rand uniform not found in shader. This should not be the case unless the trace shader is being debugged.\n");
+    }
 
     window->_blend_uniform = glGetUniformLocation(window->_trace_shader, "blend");
     PROPAGATE(window->_blend_uniform != -1, ERROR, "Couldn't find blend uniform.");
