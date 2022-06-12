@@ -75,7 +75,7 @@ mat3 rotation_mat(vec3 axis, float angle) {
 }
 
 uint query_svo_helper(uint x, uint y, uint z, uint w, out uint fw, uint pos, bool leaf) {
-    while (true) {
+    while (w > 0) {
 	if (leaf) return _svo[pos]; 
 	
 	bool bx = x < w / 2;
@@ -131,7 +131,6 @@ uint get_voxel(ivec3 pos, out uint fw) {
 
 float traverse(inout vec3 ray_pos, vec3 ray_dir, out uint voxel, out bvec3 mask, inout uint iters, inout uint last_fw) {
     vec3 delta_dist = 1.0 / ray_dir;
-
     vec3 adj_ray_pos = ray_pos / float(last_fw);
     vec3 t_forward = (ceil(adj_ray_pos) - adj_ray_pos) * delta_dist;
     vec3 t_backward = (floor(adj_ray_pos) - adj_ray_pos) * delta_dist;
@@ -141,7 +140,6 @@ float traverse(inout vec3 ray_pos, vec3 ray_dir, out uint voxel, out bvec3 mask,
     ray_pos += t * ray_dir;
     iters += last_fw;
     voxel = get_voxel(ivec3(floor(ray_pos)), last_fw);
-
     return t;
 }
 
@@ -226,7 +224,8 @@ void main() {
     const vec4 new_bright_color_pixel = blend_factor * prev_bright_color_pixel + (1.0 - blend_factor) * vec4(accum_light / float(RAYS_PER_PIXEL), 1.0);
 
     imageStore(frag_color, pixel_coords, new_frag_color_pixel);
-    imageStore(bright_color, pixel_coords, new_bright_color_pixel);
     imageStore(prev_frag_color, pixel_coords, new_frag_color_pixel);
+
+    imageStore(bright_color, pixel_coords, new_bright_color_pixel);
     imageStore(prev_bright_color, pixel_coords, new_bright_color_pixel);
 }

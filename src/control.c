@@ -46,6 +46,11 @@ void handle_control(window_t* window, float dt) {
 	window->_world._camera._camera_loc[1] -= MOVE_SPEED * dt;
 	window->_moved = 1;
     }
+    /*printf("%f %f %f\n",
+	   window->_world._camera._camera_loc[0],
+	   window->_world._camera._camera_loc[1],
+	   window->_world._camera._camera_loc[2]
+	   );*/
 
     double new_xpos, new_ypos;
     glfwGetCursorPos(window->_glfw_window, &new_xpos, &new_ypos);

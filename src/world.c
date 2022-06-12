@@ -187,10 +187,7 @@ void init_chunk(chunk_t* chunk) {
 	chunk_raw[i] = (uint32_t) ((r << 24) | (g << 16) | (b << 8) | (uint8_t) rand());
 	if (rand() % 10 > 1)
 	    chunk_raw[i] &= 0xFFFFFFFE;
-	int32_t x = (int32_t) i % CHUNK_SIZE;
-	int32_t y = (int32_t) i / CHUNK_SIZE % CHUNK_SIZE;
-	int32_t z = (int32_t) i / CHUNK_SIZE / CHUNK_SIZE;
-	if (x % 2 == 0)
+	if (rand() % 10 > 2)
 	    chunk_raw[i] = 0;
     }
     svo_node_t* svo = calloc(CHUNK_SIZE * 2, sizeof(svo_node_t));
@@ -199,23 +196,28 @@ void init_chunk(chunk_t* chunk) {
     printf("Num nodes: %u\n", num_nodes);
     uint32_t bad_count = 0;
     uint32_t bad_count_gpu = 0;
+    uint32_t non_zero_count = 0;
+    uint32_t non_zero_count_gpu = 0;
     for (uint32_t i = 0; i < CHUNK_SIZE; ++i) {
 	uint32_t x = i % CHUNK_WIDTH;
 	uint32_t y = i / CHUNK_WIDTH % CHUNK_WIDTH;
 	uint32_t z = i / CHUNK_WIDTH / CHUNK_WIDTH;
 	uint32_t queried_voxel = query_svo(svo, num_nodes, x, y, z, CHUNK_WIDTH);
-	uint32_t queried_gpu_voxel = query_svo_gpu(svo, num_nodes, x, y, z, CHUNK_WIDTH);
+	uint32_t queried_voxel_gpu = query_svo_gpu(svo, num_nodes, x, y, z, CHUNK_WIDTH);
 	uint32_t actual_voxel = chunk_raw[i];
 	if (queried_voxel != actual_voxel) {
 	    printf("CPU: %u %u\n", queried_voxel, actual_voxel);
 	    ++bad_count;
 	}
-	if (queried_gpu_voxel != actual_voxel) {
+	if (queried_voxel_gpu != actual_voxel) {
 	    printf("CPU: %u %u\n", queried_voxel, actual_voxel);
 	    ++bad_count_gpu;
 	}
+	non_zero_count += queried_voxel != 0;
+	non_zero_count_gpu += queried_voxel_gpu != 0;
     }
     printf("Bad voxels: %u %u\n", bad_count, bad_count_gpu);
+    printf("Non-zero voxels: %u %u\n", non_zero_count, non_zero_count_gpu);
 
     free(chunk_raw);
     chunk->_svo = svo;
