@@ -34,4 +34,11 @@
     return (error);					\
     }
 
+#define WARNING(call, log)			\
+    {							\
+	if (!(call)) {					\
+	    fprintf(stderr, "WARNING: %s\n", (log));	\
+	}						\
+    }
+
 #endif // ERROR_H_

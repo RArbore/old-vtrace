@@ -171,21 +171,19 @@ int32_t create_context(window_t* window) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     window->_camera_loc_uniform = glGetUniformLocation(window->_trace_shader, "camera_loc");
-    PROPAGATE(window->_camera_loc_uniform != -1, ERROR, "Couldn't find camera_loc uniform.");
+    WARNING(window->_camera_loc_uniform != -1, "Couldn't find camera_loc uniform.");
 
     window->_camera_rot_uniform = glGetUniformLocation(window->_trace_shader, "camera_rot");
-    PROPAGATE(window->_camera_rot_uniform != -1, ERROR, "Couldn't find camera_rot uniform.");
+    WARNING(window->_camera_rot_uniform != -1, "Couldn't find camera_rot uniform.");
 
     window->_rand_uniform = glGetUniformLocation(window->_trace_shader, "rand");
-    if (window->_rand_uniform == -1) {
-	fprintf(stderr, "WARNING: Rand uniform not found in shader. This should not be the case unless the trace shader is being debugged.\n");
-    }
+    WARNING(window->_rand_uniform != -1, "Couldn't find rand uniform.");
 
     window->_blend_uniform = glGetUniformLocation(window->_trace_shader, "blend");
-    PROPAGATE(window->_blend_uniform != -1, ERROR, "Couldn't find blend uniform.");
+    WARNING(window->_blend_uniform != -1, "Couldn't find blend uniform.");
 
     window->_horizontal_uniform = glGetUniformLocation(window->_blur_shader, "horizontal");
-    PROPAGATE(window->_horizontal_uniform != -1, ERROR, "Couldn't find horizontal uniform.");
+    WARNING(window->_horizontal_uniform != -1, "Couldn't find horizontal uniform.");
 
     glUseProgram(window->_bloom_shader);
     GLint image_uniform = glGetUniformLocation(window->_bloom_shader, "image");
